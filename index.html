@@ -1,0 +1,3045 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Comercial — Explosão Alimentos</title>
+<meta property="og:title"       content="Dashboard Comercial — Explosão Alimentos">
+<meta property="og:description" content="Gestão comercial, carteira de clientes e comissões">
+<meta property="og:url"         content="https://rasecarao.github.io/">
+<meta property="fb:app_id"      content="966242223397198">
+<!-- Favicon EA (base64 — substitua FAVICON_BASE64 pela imagem real) -->
+<link id="ea-favicon" rel="icon" type="image/png" href="https://explosaoalimentos.com.br/wp-content/uploads/2024/11/logo-menor-e1731554322568.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  /* Paleta oficial EA — sistemas-ea skill */
+  --accent:     #1A5C38;
+  --accent-light:#2a7a4e;
+  --accent-dim: #e8f5ee;
+  --bg:         #F7F6F3;
+  --surface:    #FFFFFF;
+  --surface2:   #F1F0ED;
+  --border:     #E2E0DA;
+  --border2:    #CBC9C2;
+  --text:       #1A1A18;
+  --text2:      #6B6960;
+  --text3:      #9B9890;
+  --danger:     #C0392B;
+  --danger-bg:  #FDE8E8;
+  --warn:       #C07000;
+  --warn-bg:    #FFF8E6;
+  --info:       #1565C0;
+  --info-bg:    #E3F2FD;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;background:var(--bg);color:var(--text)}
+
+/* TOPBAR EA */
+.topbar{position:sticky;top:0;z-index:50;height:64px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.5rem;gap:.75rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.topbar-title{color:var(--accent);font-size:16px;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+.topbar-badge{background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:11px;padding:4px 10px;border-radius:20px;white-space:nowrap;max-width:280px;overflow:hidden;text-overflow:ellipsis}
+
+/* TAB NAV */
+.tab-nav{position:sticky;top:64px;z-index:49;background:var(--surface);border-bottom:2px solid var(--border);display:flex;overflow-x:auto;gap:0;scrollbar-width:none}
+.tab-nav::-webkit-scrollbar{display:none}
+.tab-btn{padding:11px 16px;height:auto;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:6px;font-family:inherit}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* PAGES */
+.page{display:none;padding:1.5rem;max-width:1400px;margin:0 auto}
+.page.active{display:block}
+
+/* FILTRO GLOBAL */
+.filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;margin-bottom:1.25rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.filter-bar label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.filter-bar select,.filter-bar input{padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;background:var(--surface2);color:var(--text);outline:none}
+.filter-bar select:focus,.filter-bar input:focus{border-color:var(--accent)}
+.filter-group{display:flex;align-items:center;gap:6px}
+.btn-filter-clear{padding:5px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-size:12px;cursor:pointer;color:var(--text2)}
+.btn-filter-clear:hover{background:var(--border)}
+
+/* CARDS */
+.card{background:var(--surface);border-radius:10px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid var(--border)}
+.card-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:12px}
+.card-grid{display:grid;gap:1rem}
+.card-grid-4{grid-template-columns:repeat(4,1fr)}
+.card-grid-2{grid-template-columns:repeat(2,1fr)}
+.card-grid-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.card-grid-4{grid-template-columns:repeat(2,1fr)}.card-grid-3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.card-grid-4,.card-grid-2,.card-grid-3{grid-template-columns:1fr}}
+
+/* KPI CARDS */
+.kpi-card{background:var(--surface);border-radius:10px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid var(--border)}
+.kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text2);margin-bottom:6px}
+.kpi-value{font-size:22px;font-weight:700;color:var(--text);line-height:1}
+.kpi-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.kpi-icon{font-size:28px;float:right;margin-top:-2px}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--accent);color:#fff}
+thead th{padding:9px 12px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.3px;white-space:nowrap}
+thead th.right{text-align:right}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:nth-child(even){background:var(--surface2)}
+tbody tr:hover{background:var(--accent-dim)}
+tbody td{padding:8px 12px;vertical-align:middle}
+tbody td.right{text-align:right;font-variant-numeric:tabular-nums}
+tbody td.mono{font-family:monospace;font-size:12px}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.b-ok{background:#e8f5e9;color:#2e7d32}
+.b-warn{background:var(--warn-bg);color:var(--warn)}
+.b-danger{background:var(--danger-bg);color:var(--danger)}
+.b-info{background:var(--info-bg);color:var(--info)}
+.b-novo{background:#f3e5f5;color:#7b1fa2}
+.b-gray{background:var(--surface2);color:var(--text2)}
+
+/* BTNS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-light)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.btn-secondary:hover{background:var(--border)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:hover{opacity:.9}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* SECTION */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem}
+.section-title{font-size:13px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.5px}
+
+/* SEARCH */
+.search-input{padding:6px 10px;border:1px solid var(--border2);border-radius:7px;font-size:13px;width:220px;background:var(--surface2);outline:none}
+.search-input:focus{border-color:var(--accent)}
+
+/* CHART WRAPPER */
+.chart-wrap{position:relative;height:220px}
+.chart-wrap.tall{height:280px}
+
+/* PROGRESS BAR */
+.prog-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:3px}
+.prog-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+
+/* IMPORT AREA */
+.drop-zone{border:2px dashed var(--border2);border-radius:12px;padding:2.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone-icon{font-size:36px;margin-bottom:.5rem}
+.drop-zone-text{font-size:14px;color:var(--text2);margin-bottom:.5rem}
+.drop-zone-sub{font-size:12px;color:var(--text3)}
+
+/* MAPPER */
+.mapper-grid{display:grid;grid-template-columns:1fr;gap:.4rem}
+.mapper-row{display:flex;align-items:center;gap:.5rem;padding:.4rem .6rem;background:var(--surface2);border-radius:7px}
+.mapper-label{font-size:12px;font-weight:600;color:var(--text2);width:130px;flex-shrink:0}
+.mapper-select{flex:1;padding:4px 6px;border:1px solid var(--border2);border-radius:5px;font-size:12px;background:var(--surface);outline:none}
+
+/* CONFIG */
+.config-row{display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid var(--border)}
+.config-row:last-child{border-bottom:none}
+.config-label{font-size:13px;flex:1}
+.config-input{width:100px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-size:13px;text-align:right;background:var(--surface2);outline:none}
+.config-input:focus{border-color:var(--accent)}
+
+/* TOAST */
+#toast{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast-msg{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.15);animation:slideIn .2s ease;pointer-events:auto;max-width:320px}
+.toast-ok{background:#2e7d32;color:#fff}
+.toast-error{background:var(--danger);color:#fff}
+.toast-warn{background:var(--warn);color:#fff}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* VERSION BADGE */
+#app-version{position:fixed;bottom:10px;right:12px;z-index:9999;font-size:11px;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 8px}
+
+/* VENDEDOR PAGE */
+.vendedor-card{background:var(--accent);color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:1rem}
+.vendedor-name{font-size:18px;font-weight:700;margin-bottom:4px}
+.vendedor-meta{font-size:12px;opacity:.8;display:flex;gap:1rem;flex-wrap:wrap}
+.vendedor-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem}
+@media(max-width:500px){.vendedor-kpis{grid-template-columns:1fr}}
+.v-kpi{background:var(--surface);border-radius:8px;padding:12px 14px}
+.v-kpi-label{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.v-kpi-val{font-size:18px;font-weight:700;color:var(--text)}
+
+/* CARTEIRA STATUS COLORS */
+.status-ativo .prog-fill{background:#2e7d32}
+.status-novo .prog-fill{background:#7b1fa2}
+.status-risco .prog-fill{background:var(--warn)}
+.status-inativo .prog-fill{background:var(--danger)}
+
+/* PRINT */
+@media print{
+  .topbar,.tab-nav,.filter-bar,.btn,.no-print{display:none!important}
+  .page{display:block!important;padding:0}
+  #print-area{display:block!important}
+  body{background:#fff}
+  .card{box-shadow:none;border:1px solid #ccc}
+}
+#print-area{display:none}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.empty-state-icon{font-size:40px;margin-bottom:.75rem}
+.empty-state-text{font-size:14px;margin-bottom:.25rem;color:var(--text2)}
+.empty-state-sub{font-size:12px}
+
+/* MONTH HEAT CELLS */
+.heat-cell{padding:4px 8px;border-radius:4px;text-align:right;font-variant-numeric:tabular-nums;font-size:12px}
+.heat-0{background:#fde8e8;color:#c62828}
+.heat-1{background:#fff8e6;color:#e65100}
+.heat-2{background:#fff9c4;color:#f57f17}
+.heat-3{background:#e8f5e9;color:#1b5e20}
+.heat-4{background:#c8e6c9;color:#1b5e20;font-weight:600}
+
+.gap{margin-top:1rem}
+.row-flex{display:flex;gap:1rem;flex-wrap:wrap}
+.row-flex .card{flex:1;min-width:280px}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+<div id="app-version">Rev 5.6</div>
+
+<!-- TOPBAR -->
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(255,255,255,.92);flex-direction:column;align-items:center;justify-content:center;gap:1rem">
+  <div style="width:52px;height:52px;border:5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite"></div>
+  <div id="loading-msg" style="font-size:14px;color:var(--text);font-weight:600;max-width:300px;text-align:center">Carregando...</div>
+  <div style="width:280px;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+    <div id="loading-bar" style="height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .3s"></div>
+  </div>
+  <div id="loading-sub" style="font-size:12px;color:var(--text2)"></div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</div>
+
+<div class="topbar">
+  <img id="topbar-logo" src="https://explosaoalimentos.com.br/wp-content/uploads/2024/11/logo-menor-e1731554322568.png"
+    alt="Explosão Alimentos"
+    style="height:44px;width:auto;object-fit:contain;flex-shrink:0"
+    onerror="this.style.display='none'">
+  <div style="display:flex;flex-direction:column;gap:1px;margin-left:4px">
+    <div class="topbar-title">Dashboard Comercial</div>
+    <div style="font-size:11px;color:var(--text2);font-weight:400">Explosão Alimentos</div>
+  </div>
+  <div style="flex:1"></div>
+  <button onclick="carregarTudoDoSheets()" title="Atualizar dados do Sheets"
+    style="background:var(--accent);border:none;color:#fff;padding:6px 14px;
+      border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;
+      display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0">
+    🔄 Atualizar
+  </button>
+</div>
+</div>
+
+<!-- TAB NAV -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showPage('dashboard')" id="tab-dashboard">Dashboard</button>
+  <button class="tab-btn" onclick="showPage('clientes')" id="tab-clientes">Clientes</button>
+  <button class="tab-btn" onclick="showPage('produtos')" id="tab-produtos">Produtos</button>
+  <button class="tab-btn" onclick="showPage('vendedores')" id="tab-vendedores">Vendedores</button>
+  <button class="tab-btn" onclick="showPage('bonus')" id="tab-bonus">Bônus Cadastro</button>
+  <button class="tab-btn" onclick="showPage('carteira')" id="tab-carteira">Carteira</button>
+  <button class="tab-btn" onclick="showPage('baseativa')" id="tab-baseativa">Base Ativa</button>
+  <button class="tab-btn" onclick="showPage('importar')" id="tab-importar">Importar</button>
+  <button class="tab-btn" onclick="showPage('config')" id="tab-config">Configurações</button>
+</nav>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div class="page active" id="page-dashboard">
+  <div class="filter-bar no-print">
+    <div class="filter-group"><label>Período</label>
+      <select id="f-mes" onchange="applyFilters()"><option value="">Todos os meses</option></select>
+      <select id="f-ano" onchange="applyFilters()"><option value="">Todos os anos</option></select>
+    </div>
+    <div class="filter-group"><label>Vendedor</label>
+      <select id="f-vendedor" onchange="applyFilters()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group"><label>Segmento</label>
+      <select id="f-segmento" onchange="applyFilters()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group"><label>Tabela</label>
+      <select id="f-tabela" onchange="applyFilters()"><option value="">Todas</option></select>
+    </div>
+    <div class="filter-group"><label>Situação</label>
+      <select id="f-situacao" onchange="applyFilters()"><option value="">Todas</option></select>
+    </div>
+    <button class="btn-filter-clear" onclick="clearFilters()">✕ Limpar</button>
+  </div>
+
+  <div class="card-grid card-grid-4 gap">
+    <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-label">Faturamento Total</div><div class="kpi-value" id="kpi-fat">R$ 0</div><div class="kpi-sub" id="kpi-fat-sub">—</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🎫</div><div class="kpi-label">Ticket Médio / NF</div><div class="kpi-value" id="kpi-ticket">R$ 0</div><div class="kpi-sub" id="kpi-ticket-sub">—</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🏪</div><div class="kpi-label">Clientes Ativos</div><div class="kpi-value" id="kpi-clientes">0</div><div class="kpi-sub" id="kpi-clientes-sub">—</div></div>
+    <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-label">Total de NFs</div><div class="kpi-value" id="kpi-nfs">0</div><div class="kpi-sub" id="kpi-nfs-sub">—</div></div>
+  </div>
+
+  <div class="gap row-flex">
+    <div class="card" style="flex:2;min-width:300px">
+      <div class="card-title">Faturamento por Dia</div>
+      <div class="chart-wrap"><canvas id="chart-dias"></canvas></div>
+    </div>
+    <div class="card" style="flex:1;min-width:220px">
+      <div class="card-title">Por Tabela de Preço</div>
+      <div class="chart-wrap"><canvas id="chart-tabela"></canvas></div>
+    </div>
+  </div>
+
+  <div class="gap row-flex">
+    <div class="card" style="flex:1;min-width:280px">
+      <div class="card-title">Top 10 Clientes</div>
+      <div class="chart-wrap tall"><canvas id="chart-top-clientes"></canvas></div>
+    </div>
+    <div class="card" style="flex:1;min-width:280px">
+      <div class="card-title">Vendas por Vendedor</div>
+      <div class="chart-wrap tall"><canvas id="chart-vendedores"></canvas></div>
+    </div>
+  </div>
+
+  <div class="gap">
+    <div class="card">
+      <div class="card-title">Faturamento por Segmento</div>
+      <div class="chart-wrap"><canvas id="chart-segmento"></canvas></div>
+    </div>
+  </div>
+
+  <div id="dash-empty" class="empty-state" style="display:none">
+    <div class="empty-state-icon">📥</div>
+    <div class="empty-state-text">Nenhum dado de vendas carregado</div>
+    <div class="empty-state-sub">Vá até a aba <b>Importar</b> e carregue o CSV de vendas do Fácil123</div>
+  </div>
+</div>
+
+<!-- ===================== CLIENTES ===================== -->
+<div class="page" id="page-clientes">
+  <div class="filter-bar no-print" style="flex-wrap:wrap;gap:.5rem">
+    <div class="filter-group">
+      <label>Mês/Ano</label>
+      <select id="fc-mes" onchange="applyFilters()"><option value="">Todos</option></select>
+      <select id="fc-ano" onchange="applyFilters()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group"><label>Vendedor</label>
+      <select id="fc-vendedor" onchange="applyFilters()"><option value="">Todos</option></select>
+    </div>
+    <input type="text" class="search-input" placeholder="🔍 Buscar cliente..." id="search-clientes" oninput="renderClientesTable()">
+  </div>
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Ranking de Clientes</div>
+      <button class="btn btn-secondary btn-sm" onclick="exportTable('tbl-clientes','Clientes')">⬇ Excel</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tbl-clientes">
+        <thead><tr>
+          <th>#</th><th>Cliente</th><th>Vendedor</th><th>Segmento</th>
+          <th class="right">Qtd NFs</th><th class="right">Valor Total</th><th class="right">% Total</th>
+        </tr></thead>
+        <tbody id="tbody-clientes"></tbody>
+      </table>
+    </div>
+    <div id="clientes-empty" class="empty-state" style="display:none">
+      <div class="empty-state-icon">📥</div><div class="empty-state-text">Importe o CSV de vendas para ver os clientes</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PRODUTOS ===================== -->
+<div class="page" id="page-produtos">
+  <div class="filter-bar no-print">
+    <div class="filter-group"><label>Período</label>
+      <select id="fp-mes" onchange="applyFilters()"><option value="">Todos</option></select>
+      <select id="fp-ano" onchange="applyFilters()"><option value="">Todos</option></select>
+    </div>
+    <input type="text" class="search-input" placeholder="🔍 Buscar produto..." id="search-produtos" oninput="renderProdutosTable()">
+  </div>
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Ranking de Produtos</div>
+      <button class="btn btn-secondary btn-sm" onclick="exportTable('tbl-produtos','Produtos')">⬇ Excel</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tbl-produtos">
+        <thead><tr>
+          <th>#</th><th>Produto</th>
+          <th class="right">Qtd Vendida</th><th class="right">Valor Total</th><th class="right">% Total</th>
+        </tr></thead>
+        <tbody id="tbody-produtos"></tbody>
+      </table>
+    </div>
+    <div id="produtos-empty" class="empty-state" style="display:none">
+      <div class="empty-state-icon">📥</div><div class="empty-state-text">Importe o CSV de vendas com coluna de produto</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VENDEDORES ===================== -->
+<div class="page" id="page-vendedores">
+  <div class="filter-bar no-print">
+    <div class="filter-group"><label>Vendedor</label>
+      <select id="fv-vendedor" onchange="renderVendedorDetail()"><option value="">Selecione...</option></select>
+    </div>
+    <div class="filter-group"><label>Período</label>
+      <select id="fv-mes" onchange="renderVendedorDetail()"><option value="">Todos</option></select>
+      <select id="fv-ano" onchange="renderVendedorDetail()"><option value="">Todos</option></select>
+    </div>
+    <button class="btn btn-primary btn-sm no-print" onclick="printFichaComissao()">🖨️ Imprimir Ficha</button>
+  </div>
+
+  <div id="vendedor-detail">
+    <div class="vendedor-card" id="vd-header" style="display:none">
+      <div class="vendedor-name" id="vd-nome">—</div>
+      <div class="vendedor-meta"><span id="vd-periodo">—</span><span id="vd-canal">—</span></div>
+    </div>
+    <div class="vendedor-kpis" id="vd-kpis" style="display:none">
+      <div class="v-kpi"><div class="v-kpi-label">Faturamento</div><div class="v-kpi-val" id="vd-fat">R$ 0</div></div>
+      <div class="v-kpi"><div class="v-kpi-label">Qtd NFs</div><div class="v-kpi-val" id="vd-nfs">0</div></div>
+      <div class="v-kpi"><div class="v-kpi-label">Comissão (<span id="vd-pct">5</span>%)</div><div class="v-kpi-val" id="vd-comissao">R$ 0</div></div>
+    </div>
+    <div class="card" id="vd-tabela-wrap" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Vendas por Cliente</div>
+        <button class="btn btn-secondary btn-sm no-print" onclick="exportTable('tbl-vd-clientes','Vendas_'+document.getElementById('fv-vendedor').value)">⬇ Excel</button>
+      </div>
+      <div class="table-wrap">
+        <table id="tbl-vd-clientes">
+          <thead><tr><th>Cliente</th><th>Segmento</th><th class="right">Qtd NFs</th><th class="right">Valor Total</th><th class="right">Comissão</th></tr></thead>
+          <tbody id="tbody-vd-clientes"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="vd-empty" class="empty-state">
+      <div class="empty-state-icon">👤</div>
+      <div class="empty-state-text">Selecione um vendedor para ver o detalhamento</div>
+    </div>
+  </div>
+
+  <div class="gap">
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">Ranking Geral de Vendedores</div>
+        <button class="btn btn-secondary btn-sm no-print" onclick="exportTable('tbl-rank-vend','Ranking_Vendedores')">⬇ Excel</button>
+      </div>
+      <div class="table-wrap">
+        <table id="tbl-rank-vend">
+          <thead><tr><th>#</th><th>Vendedor</th><th class="right">Qtd NFs</th><th class="right">Valor Total</th><th class="right">% Total</th><th class="right">Comissão</th></tr></thead>
+          <tbody id="tbody-rank-vend"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BÔNUS CADASTRO ===================== -->
+<div class="page" id="page-bonus">
+  <div class="filter-bar no-print">
+    <div class="filter-group"><label>Vendedor</label>
+      <select id="fb-vendedor" onchange="renderBonus()"><option value="">Todos</option></select>
+    </div>
+    <button class="btn btn-secondary btn-sm no-print" onclick="exportTable('tbl-bonus','Bonus_Cadastro')">⬇ Excel</button>
+  </div>
+
+  <div class="card-grid card-grid-3 gap">
+    <div class="kpi-card"><div class="kpi-label">Novos Clientes</div><div class="kpi-value" id="b-qtd">0</div></div>
+    <div class="kpi-card"><div class="kpi-label">Faturamento (Novos)</div><div class="kpi-value" id="b-fat">R$ 0</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total Bônus (<span id="b-pct-label">2</span>%)</div><div class="kpi-value" id="b-bonus">R$ 0</div></div>
+  </div>
+
+  <div class="card gap">
+    <div class="section-title" style="margin-bottom:.75rem">Novos Clientes — Bônus de Cadastro</div>
+    <div class="table-wrap">
+      <table id="tbl-bonus">
+        <thead><tr><th>Cliente</th><th>Vendedor</th><th>Segmento</th><th class="right">Qtd NFs</th><th class="right">Faturamento</th><th class="right">Bônus</th></tr></thead>
+        <tbody id="tbody-bonus"></tbody>
+      </table>
+    </div>
+    <div id="bonus-empty" class="empty-state" style="display:none">
+      <div class="empty-state-icon">⭐</div>
+      <div class="empty-state-text">Nenhum cliente novo detectado</div>
+      <div class="empty-state-sub">Certifique-se de importar o histórico de clientes junto com as vendas</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CARTEIRA ===================== -->
+<div class="page" id="page-carteira">
+  <div class="filter-bar no-print" style="flex-wrap:wrap;gap:.5rem">
+    <div class="filter-group">
+      <label>Mês/Ano</label>
+      <select id="fcar-mes" onchange="renderCarteira()"><option value="">Todos</option></select>
+      <select id="fcar-ano" onchange="renderCarteira()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Recuar período</label>
+      <select id="fcar-offset" onchange="renderCarteira()">
+        <option value="0">Atual</option>
+        <option value="1">-1 mês</option>
+        <option value="2">-2 meses</option>
+        <option value="3">-3 meses</option>
+        <option value="4">-4 meses</option>
+        <option value="5">-5 meses</option>
+        <option value="6">-6 meses</option>
+        <option value="7">-7 meses</option>
+        <option value="8">-8 meses</option>
+        <option value="9">-9 meses</option>
+        <option value="10">-10 meses</option>
+        <option value="11">-11 meses</option>
+        <option value="12">-12 meses</option>
+      </select>
+    </div>
+    <div class="filter-group"><label>Status</label>
+      <select id="fcar-status" onchange="renderCarteira()">
+        <option value="">Todos</option>
+        <option value="ATIVO">✅ Ativo</option>
+        <option value="CLIENTE NOVO">🆕 Novo</option>
+        <option value="RISCO INATIVIDADE">⚠️ Risco</option>
+        <option value="INATIVO">🔴 Inativo</option>
+      </select>
+    </div>
+    <div class="filter-group"><label>Vendedor</label>
+      <select id="fcar-vendedor" onchange="renderCarteira()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group"><label>Segmento</label>
+      <select id="fcar-seg" onchange="renderCarteira()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group"><label>UF</label>
+      <select id="fcar-uf" onchange="renderCarteira()"><option value="">Todas</option></select>
+    </div>
+    <input type="text" class="search-input" placeholder="🔍 Buscar cliente..." id="search-carteira" oninput="renderCarteira()">
+    <button class="btn btn-secondary btn-sm no-print" onclick="exportCarteira()">⬇ Excel</button>
+  </div>
+
+  <div class="card-grid card-grid-4 gap">
+    <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-label">Total Carteira</div><div class="kpi-value" id="car-total">0</div></div>
+    <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-label">Ativos</div><div class="kpi-value" id="car-ativo">0</div></div>
+    <div class="kpi-card"><div class="kpi-icon">⚠️</div><div class="kpi-label">Risco Inat.</div><div class="kpi-value" id="car-risco">0</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🔴</div><div class="kpi-label">Inativos</div><div class="kpi-value" id="car-inativo">0</div></div>
+  </div>
+
+  <div class="card gap">
+    <div class="table-wrap">
+      <table id="tbl-carteira">
+        <thead><tr>
+          <th>Cliente</th><th>Endereço</th><th>Vendedor</th><th>Seg.</th><th>UF</th>
+          <th id="th-m1" class="right">—</th>
+          <th id="th-m2" class="right">—</th>
+          <th id="th-m3" class="right">—</th>
+          <th id="th-m4" class="right">—</th>
+          <th id="th-m5" class="right">—</th>
+          <th id="th-m6" class="right">—</th>
+          <th class="right">YTD</th>
+          <th class="right">Lacuna</th>
+          <th class="right">% Cresc</th>
+          <th>Status</th>
+        </tr></thead>
+        <tbody id="tbody-carteira"></tbody>
+      </table>
+    </div>
+    <div id="carteira-empty" class="empty-state" style="display:none">
+      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-text">Importe o cadastro de clientes e o relatório de vendas</div>
+      <div class="empty-state-sub">A aba Carteira cruza os dois arquivos automaticamente</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BASE ATIVA ===================== -->
+<div class="page" id="page-baseativa">
+
+  <!-- FILTROS GLOBAIS -->
+  <div class="filter-bar no-print">
+    <div class="filter-group"><label>Status</label>
+      <select id="fba-status" onchange="renderBaseAtiva()">
+        <option value="">Todos</option>
+        <option value="ativo">✅ Ativo</option>
+        <option value="inativo">❌ Inativo</option>
+      </select>
+    </div>
+    <div class="filter-group"><label>Vendedor</label>
+      <select id="fba-vendedor" onchange="renderBaseAtiva()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group"><label>Segmento</label>
+      <select id="fba-seg" onchange="renderBaseAtiva()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-group"><label>UF</label>
+      <select id="fba-uf" onchange="renderBaseAtiva()"><option value="">Todas</option></select>
+    </div>
+    <div class="filter-group"><label>Tipo</label>
+      <select id="fba-tipo" onchange="renderBaseAtiva()"><option value="">Todos</option></select>
+    </div>
+    <input type="text" class="search-input" placeholder="🔍 Nome, CNPJ, cidade..." id="search-baseativa" oninput="renderBaseAtiva()">
+    <button class="btn-filter-clear" onclick="limparFiltrosBA()">✕ Limpar</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="card-grid card-grid-4" style="margin-bottom:1rem">
+    <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-label">Total Cadastros</div><div class="kpi-value" id="ba-total">0</div></div>
+    <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-label">Ativos</div><div class="kpi-value" id="ba-ativos">0</div></div>
+    <div class="kpi-card"><div class="kpi-icon">❌</div><div class="kpi-label">Inativos</div><div class="kpi-value" id="ba-inativos">0</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🏙️</div><div class="kpi-label">Municípios</div><div class="kpi-value" id="ba-municipios">0</div></div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="card" style="padding:12px">
+    <div class="section-header" style="margin-bottom:.5rem">
+      <div class="section-title">Base Ativa de Clientes</div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <span id="ba-count" style="font-size:12px;color:var(--text2)"></span>
+        <button class="btn btn-secondary btn-sm no-print" onclick="exportTable('tbl-baseativa','Base_Ativa')">⬇ Excel</button>
+      </div>
+    </div>
+
+    <!-- Tabela com scroll horizontal e colunas bem dimensionadas -->
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table id="tbl-baseativa" style="width:100%;border-collapse:collapse;font-size:12px;min-width:1100px">
+        <thead>
+          <tr id="thead-ba">
+            <!-- Cabeçalhos gerados por JS com setas de ordenação -->
+          </tr>
+        </thead>
+        <tbody id="tbody-baseativa"></tbody>
+      </table>
+    </div>
+
+    <div id="baseativa-empty" class="empty-state" style="display:none">
+      <div class="empty-state-icon">👥</div>
+      <div class="empty-state-text">Importe o cadastro de clientes para ver a Base Ativa</div>
+      <div class="empty-state-sub">Vá até a aba <b>Importar</b> e carregue o CSV de clientes do Fácil123</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== IMPORTAR ===================== -->
+<div class="page" id="page-importar">
+  <div class="row-flex">
+
+    <!-- VENDAS -->
+    <div class="card" style="flex:1;min-width:280px">
+      <div class="card-title">📊 Relatório de Vendas (XLSX ou CSV)</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:.75rem;background:var(--surface2);border-radius:8px;padding:.65rem .85rem;border-left:3px solid var(--accent)">
+        <div style="font-weight:700;color:var(--text);margin-bottom:.3rem">📌 Como exportar do Fácil123:</div>
+        <ol style="margin:0;padding-left:1.2rem;line-height:1.7">
+          <li>Acesse <b>Relatórios → Vendas e seus produtos</b></li>
+          <li>Filtre o período desejado e exporte em <b>CSV</b></li>
+          <li>Abra o CSV no <b>Google Drive</b> e converta para <b>XLSX</b> (Arquivo → Salvar como Planilhas Google → depois Baixar como .xlsx)</li>
+          <li>Arraste o <b>.xlsx</b> aqui abaixo</li>
+        </ol>
+        <div style="margin-top:.4rem;font-size:11px;color:var(--text3)">⚡ O sistema detecta o modelo automaticamente e normaliza todos os dados.</div>
+      </div>
+      <div class="drop-zone" id="dz-vendas" onclick="document.getElementById('input-vendas').click()" ondragover="dzDragOver(event,'dz-vendas')" ondragleave="dzDragLeave('dz-vendas')" ondrop="dzDrop(event,'vendas')">
+        <div class="drop-zone-icon">📄</div>
+        <div class="drop-zone-text">Clique ou arraste o XLSX/CSV de vendas</div>
+        <div class="drop-zone-sub" id="dz-vendas-name">Nenhum arquivo selecionado</div>
+      </div>
+      <input type="file" id="input-vendas" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadFile(event,'vendas')">
+
+      <div id="mapper-vendas" style="display:none;margin-top:1rem">
+        <div class="card-title">🗂 Mapeamento de Colunas</div>
+        <div class="mapper-grid" id="mapper-vendas-grid"></div>
+        <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" onclick="importarESincronizarVendas()">
+            ✔ Importar e Enviar ao Sheets
+          </button>
+          <span style="font-size:11px;color:var(--text3)">ou</span>
+          <button class="btn btn-secondary btn-sm" onclick="importarVendas()">
+            Só processar (sem enviar)
+          </button>
+        </div>
+      </div>
+      <div id="vendas-status" style="margin-top:.5rem;font-size:12px;color:var(--text2)"></div>
+    </div>
+
+    <!-- CSV CLIENTES -->
+    <div class="card" style="flex:1;min-width:280px">
+      <div class="card-title">👥 Cadastro de Clientes (CSV)</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">Exporte do Fácil123 o cadastro de clientes. Usado para a aba Carteira e para identificar clientes novos.</p>
+      <div class="drop-zone" id="dz-clientes" onclick="document.getElementById('input-clientes').click()" ondragover="dzDragOver(event,'dz-clientes')" ondragleave="dzDragLeave('dz-clientes')" ondrop="dzDrop(event,'clientes')">
+        <div class="drop-zone-icon">👥</div>
+        <div class="drop-zone-text">Clique ou arraste o CSV de clientes</div>
+        <div class="drop-zone-sub" id="dz-clientes-name">Nenhum arquivo selecionado</div>
+      </div>
+      <input type="file" id="input-clientes" accept=".csv,.xlsx,.xls" style="display:none" onchange="loadFile(event,'clientes')">
+
+      <!-- Opção 1: Carregar do Sheets (dados normalizados) -->
+      <div style="margin-top:.75rem;background:var(--accent-dim);border-radius:8px;padding:.75rem 1rem;border:1px solid var(--accent)">
+        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:.4rem">☁️ Carregar do Google Sheets (recomendado)</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:.6rem">Puxa os clientes já normalizados direto da planilha. Requer URL do Apps Script configurada.</div>
+        <button class="btn btn-primary btn-sm" onclick="carregarClientesDoSheets()">☁️ Carregar do Sheets</button>
+        <div id="sheets-clientes-status" style="font-size:12px;color:var(--text2);margin-top:.4rem"></div>
+      </div>
+
+      <!-- Opção 2: Importar arquivo local -->
+      <div style="margin-top:.75rem">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:.4rem">📁 Ou importar arquivo local (sem normalização)</div>
+      </div>
+
+      <div id="mapper-clientes" style="display:none;margin-top:.5rem">
+        <div class="card-title">🗂 Mapeamento de Colunas</div>
+        <div class="mapper-grid" id="mapper-clientes-grid"></div>
+        <div style="margin-top:.75rem;display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="importarESincronizarClientes()">
+            ✔ Importar e Enviar ao Sheets
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="importarClientes()">Só processar</button>
+          <button class="btn btn-secondary btn-sm" onclick="salvarMapeamento('clientes')">💾 Mapeamento</button>
+        </div>
+      </div>
+      <div id="clientes-status" style="margin-top:.5rem;font-size:12px;color:var(--text2)"></div>
+    </div>
+  </div>
+
+  <div class="card gap">
+    <div class="card-title">📋 Status dos Dados Carregados</div>
+    <div class="card-grid card-grid-3">
+      <div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">CSV de Vendas</div>
+        <div style="font-weight:600" id="status-vendas-load">❌ Não carregado</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Cadastro de Clientes</div>
+        <div style="font-weight:600" id="status-clientes-load">❌ Não carregado</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Histórico (Novos Clientes)</div>
+        <div style="font-weight:600" id="status-historico-load">—</div>
+      </div>
+    </div>
+    <div style="margin-top:.75rem">
+      <button class="btn btn-danger btn-sm" onclick="limparTodosDados()">🗑 Limpar Todos os Dados</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CONFIG ===================== -->
+<div class="page" id="page-config">
+
+  <!-- CARD URL DO APPS SCRIPT -->
+  <div class="card" style="margin-bottom:1rem;border:2px solid var(--accent)">
+    <div class="card-title">🔗 Conexão com Google Sheets (Apps Script)</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">
+      Cole aqui a URL gerada ao implantar o Apps Script na planilha do Google Sheets.
+      Usada para sincronizar o cadastro de clientes automaticamente.
+    </p>
+    <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+      <input type="text" id="cfg-script-url"
+        placeholder="https://script.google.com/macros/s/..."
+        style="flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12px;background:var(--surface2);outline:none;font-family:monospace">
+      <button class="btn btn-primary btn-sm" onclick="salvarScriptUrl()">💾 Salvar URL</button>
+      <button class="btn btn-secondary btn-sm" onclick="testarConexao()">🔌 Testar Conexão</button>
+    </div>
+    <div id="cfg-url-status" style="font-size:12px;margin-top:.5rem;color:var(--text2)"></div>
+  </div>
+
+  <div class="row-flex">
+    <div class="card" style="flex:1;min-width:250px">
+      <div class="card-title">💼 Comissões por Vendedor</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">Define o % de comissão de cada vendedor sobre as vendas liquidadas.</p>
+      <div id="config-comissoes"></div>
+      <div style="margin-top:.75rem">
+        <button class="btn btn-primary btn-sm" onclick="salvarConfig()">💾 Salvar Configurações</button>
+      </div>
+    </div>
+    <div class="card" style="flex:1;min-width:250px">
+      <div class="card-title">⭐ Bônus de Cadastro</div>
+      <div class="config-row">
+        <div class="config-label">% Bônus sobre vendas de novos clientes</div>
+        <input type="number" class="config-input" id="cfg-bonus-pct" value="2" min="0" max="100" step="0.5"> %
+      </div>
+      <div style="margin-top:.75rem">
+        <button class="btn btn-primary btn-sm" onclick="salvarConfig()">💾 Salvar</button>
+      </div>
+
+      <div style="margin-top:1.5rem">
+        <div class="card-title">📅 Meses para Carteira</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:.5rem">Quantos meses de histórico mostrar na aba Carteira (máx 6):</p>
+        <div class="config-row">
+          <div class="config-label">Meses exibidos</div>
+          <input type="number" class="config-input" id="cfg-meses-carteira" value="6" min="1" max="6">
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:.5rem" onclick="salvarConfig()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card gap">
+    <div class="card-title">🖼 Identidade Visual</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">
+      Faça upload da logo e do favicon para salvar no navegador. Arquivos ficam salvos localmente.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:.4rem">Logo (PNG com fundo transparente)</div>
+        <label style="display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;padding:6px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;font-size:12px">
+          📁 Escolher arquivo
+          <input type="file" accept=".png,.jpg,.jpeg,.svg" style="display:none" onchange="salvarLogo(this)">
+        </label>
+        <div style="margin-top:.4rem;font-size:11px;color:var(--text3)">logo_explosao_sem_fundo.png</div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:.4rem">Favicon (JPG/PNG 32×32)</div>
+        <label style="display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;padding:6px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;font-size:12px">
+          📁 Escolher arquivo
+          <input type="file" accept=".png,.jpg,.jpeg" style="display:none" onchange="salvarFavicon(this)">
+        </label>
+        <div style="margin-top:.4rem;font-size:11px;color:var(--text3)">Mascote_Sentado.jpg</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card gap">
+    <div class="card-title">ℹ️ Armazenamento</div>
+    <p style="font-size:12px;color:var(--text2)">
+      Os dados de vendas e clientes <b>não são salvos</b> no navegador.<br>
+      A cada sessão, importe o XLSX de vendas e carregue os clientes do Sheets.<br>
+      Apenas as <b>configurações</b> (% comissão, URL do script, logo) ficam salvas localmente.
+    </p>
+    <div id="historico-info" style="font-size:12px;color:var(--text3);margin-top:.5rem"></div>
+  </div>
+
+  <div class="card gap">
+    <div class="card-title">☁️ Sincronizar com Google Sheets</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">
+      Envia os dados importados para a planilha Google Sheets via Apps Script.
+      Configure a URL acima antes de sincronizar.
+    </p>
+
+    <p style="font-size:12px;color:var(--text2);margin-bottom:.75rem">
+      O envio ao Sheets acontece automaticamente ao importar na aba <b>Importar</b>.<br>
+      Use os botões abaixo apenas se precisar reenviar manualmente.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      <div style="background:var(--surface2);border-radius:8px;padding:.75rem 1rem">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:.5rem">👥 Clientes — reenvio manual</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="sincronizarClientes(false)">➕ Adicionar ao Sheets</button>
+          <button class="btn btn-danger btn-sm" onclick="sincronizarClientes(true)">🗑 Apagar e Reimportar</button>
+        </div>
+        <div id="sync-status" style="font-size:12px;color:var(--text2);margin-top:.4rem"></div>
+      </div>
+      <div style="background:var(--surface2);border-radius:8px;padding:.75rem 1rem">
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:.5rem">📊 Vendas — reenvio manual</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="sincronizarVendas(false)">➕ Adicionar ao Sheets</button>
+          <button class="btn btn-danger btn-sm" onclick="sincronizarVendas(true)">🗑 Apagar e Reimportar</button>
+          <button class="btn btn-secondary btn-sm" onclick="debugVendas()">🔍 Diagnóstico</button>
+        </div>
+        <div id="sync-vendas-status" style="font-size:12px;color:var(--text2);margin-top:.4rem"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT AREA -->
+<div id="print-area">
+  <div style="padding:2rem;max-width:900px;margin:0 auto;font-family:sans-serif">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;border-bottom:2px solid #1A5C38;padding-bottom:1rem">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:#1A5C38">Explosão Alimentos</div>
+        <div style="font-size:13px;color:#666">FICHA DE COMISSÃO</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-size:16px;font-weight:700" id="p-vendedor-nome">—</div>
+        <div style="font-size:13px;color:#666" id="p-periodo">—</div>
+      </div>
+    </div>
+    <div id="p-conteudo"></div>
+  </div>
+</div>
+
+<script>
+// ===================== STATE =====================
+let STATE = {
+  vendas: [],         // linhas do CSV de vendas
+  clientes: [],       // linhas do CSV de clientes
+  historico: new Set(), // CNPJs/nomes já vistos
+  config: {
+    comissoes: {},    // vendedor -> %
+    bonusPct: 2,
+    mesesCarteira: 6,
+    scriptUrl: 'https://script.google.com/macros/s/AKfycbwD90UVLtMZdiNcBeP8NQ_mTqRCQeFoaD1QS8pZmDW5nqoNjYk2lauazRTFE8HZ3_zhCQ/exec'
+  },
+  mapVendas: {},      // col-campo -> col-csv
+  mapClientes: {}
+};
+
+// ===================== API FETCH (Google Apps Script) =====================
+// Wrapper com timeout de 15s usando Promise.race (sem AbortSignal, evita DataCloneError).
+function apiFetch(url, options) {
+  var opts = Object.assign({ credentials: 'omit', redirect: 'follow' }, options || {});
+  var fetchPromise = fetch(url, opts).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  });
+  var timeoutPromise = new Promise(function(_, reject) {
+    setTimeout(function() {
+      reject(new Error('Timeout — verifique a URL do Apps Script'));
+    }, 15000);
+  });
+  return Promise.race([fetchPromise, timeoutPromise]);
+}
+
+// Campos necessários para vendas
+const CAMPOS_VENDAS = [
+  {id:'data',       label:'Data da Venda (emissão)',  required:true},
+  {id:'nf',         label:'Nº Pedido/Venda',          required:false},
+  {id:'nf_num',     label:'Número NF',                required:false},
+  {id:'cliente',    label:'Cliente (nome)',            required:true},
+  {id:'cidade',     label:'Cidade',                   required:false},
+  {id:'uf',         label:'UF',                       required:false},
+  {id:'situacao',   label:'Situação',                 required:false},
+  {id:'etapa',      label:'Etapa',                    required:false},
+  {id:'produto',    label:'Produto (nome)',            required:false},
+  {id:'qtd',        label:'Quantidade',               required:false},
+  {id:'vlr_unit',   label:'Vlr. Unitário',            required:false},
+  {id:'valor',      label:'Total NF (col total NF)',  required:true},
+  {id:'valor_item', label:'Total Item',               required:false},
+  {id:'desconto',   label:'Desconto',                 required:false},
+  {id:'frete',      label:'Frete',                    required:false},
+  {id:'vendedor',   label:'Vendedor',                 required:false},
+  {id:'segmento',   label:'Segmento',                 required:false},
+  {id:'tabela',     label:'Tabela de Preço',          required:false},
+  {id:'motorista',  label:'Motorista',                required:false},
+  {id:'entrega',    label:'Data de Entrega',          required:false},
+];
+
+// Mapeamento padrão exato para o relatório de vendas do Fácil123
+// Nomes são lowercase e duplicatas usam _1 (padrão SheetJS)
+const MAP_FACIL_VENDAS = {
+  data:       'emissão',
+  nf:         'venda',
+  nf_num:     'número',
+  cliente:    'nome',           // col 10 — cliente
+  cidade:     'cidade',
+  uf:         'uf',
+  situacao:   'situação',
+  etapa:      'etapa',
+  produto:    'nome_1',         // col 23 — produto (SheetJS: nome_1)
+  qtd:        'quantidade',
+  vlr_unit:   'vlr.unitário',
+  valor:      'total',          // col 18 — total NF
+  valor_item: 'total_1',        // col 30 — total item (SheetJS: total_1)
+  desconto:   'desconto',
+  frete:      'frete',
+  vendedor:   'vendedor',
+  motorista:  'motorista',
+  entrega:    'data de entrega',
+};
+
+// Campos necessários para clientes
+const CAMPOS_CLIENTES = [
+  {id:'id',             label:'ID',                       required:false},
+  {id:'nome',           label:'Nome / Razão Social',      required:true},
+  {id:'fantasia',       label:'Nome Fantasia',            required:false},
+  {id:'tipo',           label:'Tipo (Jur./Fís.)',         required:false},
+  {id:'cnpj',           label:'CNPJ',                    required:false},
+  {id:'cpf',            label:'CPF',                     required:false},
+  {id:'ie',             label:'IE',                      required:false},
+  {id:'codarea',        label:'Código de Área',          required:false},
+  {id:'fone',           label:'Fone',                    required:false},
+  {id:'codarea_wpp',    label:'Cód. Área WhatsApp',      required:false},
+  {id:'whatsapp',       label:'WhatsApp',                required:false},
+  {id:'emails',         label:'E-mails',                 required:false},
+  {id:'cep',            label:'CEP',                     required:false},
+  {id:'endereco',       label:'Endereço',                required:false},
+  {id:'numero',         label:'Número',                  required:false},
+  {id:'complemento',    label:'Complemento',             required:false},
+  {id:'bairro',         label:'Bairro',                  required:false},
+  {id:'cidade',         label:'Cidade',                  required:false},
+  {id:'uf',             label:'UF',                      required:false},
+  {id:'ibge',           label:'IBGE',                    required:false},
+  {id:'rg',             label:'RG',                      required:false},
+  {id:'ssp',            label:'SSP',                     required:false},
+  {id:'indicador_ie',   label:'Indicador da IE',         required:false},
+  {id:'observacao',     label:'Observação',              required:false},
+  {id:'email_cobranca', label:'Email p/ Cobrança',       required:false},
+  {id:'vendedor',       label:'Vendedor',                required:false},
+  {id:'id_estrangeiro', label:'ID Estrangeiro',          required:false},
+  {id:'tabela',         label:'Tabela de Preços',        required:false},
+  {id:'arquivado',      label:'Arquivado',               required:false},
+  {id:'forma_pgto',     label:'Forma de Pagamento',      required:false},
+  {id:'limite_credito', label:'Limite de Crédito',       required:false},
+  {id:'valor_limite',   label:'Valor do Limite',         required:false},
+  {id:'transp_id',      label:'Transportador ID',        required:false},
+  {id:'transportador',  label:'Transportador',           required:false},
+  {id:'vend_equiv_id',  label:'Vendedor Equiv. ID',      required:false},
+  {id:'vend_equiv',     label:'Vendedor Equivalente',    required:false},
+  {id:'atua_cliente',   label:'Atua como Cliente',       required:false},
+  {id:'atua_fornec',    label:'Atua como Fornecedor',    required:false},
+  {id:'atua_transp',    label:'Atua como Transportador', required:false},
+  {id:'atua_vendedor',  label:'Atua como Vendedor',      required:false},
+  {id:'segmento',       label:'Segmento',                required:false},
+];
+
+// Mapeamento padrão exato para o Fácil123 — bate com o cabeçalho exportado
+const MAP_FACIL_CLIENTES = {
+  id:'id', nome:'nome', fantasia:'nome fantasia', tipo:'tipo',
+  cnpj:'cnpj', cpf:'cpf', ie:'ie',
+  codarea:'codigo de área', fone:'fone',
+  codarea_wpp:'codigo de área whatsapp', whatsapp:'whatsapp',
+  emails:'emails', cep:'cep', endereco:'endereço', numero:'número',
+  complemento:'complemento', bairro:'bairro', cidade:'cidade', uf:'uf',
+  ibge:'ibge', rg:'rg', ssp:'ssp', indicador_ie:'indicador da ie',
+  observacao:'observação', email_cobranca:'email para avisos de cobrança',
+  vendedor:'vendedor', id_estrangeiro:'id estrangeiro',
+  tabela:'tabela de preços', arquivado:'arquivado',
+  forma_pgto:'forma de pagamento', limite_credito:'limite de crédito',
+  valor_limite:'valor do limite', transp_id:'transportador id',
+  transportador:'transportador', vend_equiv_id:'vendedor equivalente id',
+  vend_equiv:'vendedor equivalente', atua_cliente:'atua como cliente',
+  atua_fornec:'atua como fornecedor', atua_transp:'atua como transportador',
+  atua_vendedor:'atua como vendedor', segmento:'segmento',
+};
+
+let rawVendas = null, rawClientes = null;
+let chartInstances = {};
+let filteredVendas = [];
+
+// ===================== INIT =====================
+window.addEventListener('DOMContentLoaded', () => {
+  // Segurança: se algo travar, garante que o overlay some em 20s
+  var safetyTimer = setTimeout(function() { hideLoading(); }, 20000);
+
+  try { loadFromStorage(); } catch(e) { console.warn('loadFromStorage error', e); }
+  try { renderConfig(); } catch(e) { console.warn('renderConfig error', e); }
+  try { updateHistoricoInfo(); } catch(e) {}
+  try { aplicarLogoSalva(); } catch(e) {}
+
+  // Carregar dados do Sheets automaticamente se URL configurada
+  if(STATE.config.scriptUrl) {
+    carregarTudoDoSheets().finally(function() { clearTimeout(safetyTimer); });
+  } else {
+    clearTimeout(safetyTimer);
+    updateStatusImport();
+    hideLoading();
+  }
+});
+
+
+// ── Logo e Favicon ──────────────────────────────────────────────────────────
+function aplicarLogoSalva() {
+  var logo = localStorage.getItem('ea_logo_b64');
+  var fav  = localStorage.getItem('ea_fav_b64');
+  if(logo) {
+    var el = document.getElementById('topbar-logo');
+    if(el) el.src = 'data:image/png;base64,' + logo;
+  }
+  if(fav) {
+    var el2 = document.getElementById('ea-favicon');
+    if(el2) el2.href = 'data:image/jpeg;base64,' + fav;
+  }
+}
+
+function salvarLogo(input) {
+  // Chamado quando usuário faz upload da logo em Configurações
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var b64 = e.target.result.split(',')[1];
+    localStorage.setItem('ea_logo_b64', b64);
+    aplicarLogoSalva();
+    notify('Logo atualizada!', 'ok');
+  };
+  reader.readAsDataURL(file);
+}
+
+function salvarFavicon(input) {
+  var file = input.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var b64 = e.target.result.split(',')[1];
+    localStorage.setItem('ea_fav_b64', b64);
+    aplicarLogoSalva();
+    notify('Favicon atualizado!', 'ok');
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadFromStorage() {
+  try {
+    // Apenas configurações e mapeamentos — NUNCA dados de vendas/clientes
+    const scfg = localStorage.getItem('ea_config');
+    const smv  = localStorage.getItem('ea_map_vendas');
+    const smc  = localStorage.getItem('ea_map_clientes');
+    if(scfg) {
+      const saved = JSON.parse(scfg);
+      // Preserva a scriptUrl hardcoded se o localStorage tiver vazio
+      if(!saved.scriptUrl) delete saved.scriptUrl;
+      STATE.config = {...STATE.config, ...saved};
+    }
+    if(smv)  STATE.mapVendas   = JSON.parse(smv);
+    if(smc)  STATE.mapClientes = JSON.parse(smc);
+    // Limpar qualquer dado antigo que possa ter ficado salvo
+    ['ea_vendas','ea_clientes','ea_historico'].forEach(k => localStorage.removeItem(k));
+  } catch(e) { console.warn('Storage load error', e); }
+}
+function saveToStorage() {
+  try {
+    // Salva apenas configurações e mapeamentos — dados ficam no Sheets
+    localStorage.setItem('ea_config', JSON.stringify(STATE.config));
+    localStorage.setItem('ea_map_vendas', JSON.stringify(STATE.mapVendas));
+    localStorage.setItem('ea_map_clientes', JSON.stringify(STATE.mapClientes));
+  } catch(e) { notify('Erro ao salvar configurações','error'); }
+}
+
+// ===================== NAVIGATION =====================
+
+// ===================== CACHE DE RENDERIZAÇÃO =====================
+// Evita re-renderizar abas quando os dados não mudaram
+const _renderCache = {};
+
+function _dataHash() {
+  // Hash simples baseado no tamanho dos dados e último valor
+  const v = STATE.vendas.length;
+  const c = STATE.clientes.length;
+  const last = STATE.vendas.length ? (STATE.vendas[STATE.vendas.length-1].cliente||'') : '';
+  return v + '_' + c + '_' + last;
+}
+
+function _filterHash() {
+  return JSON.stringify(STATE.filtros);
+}
+
+function _needsRender(key, extraHash) {
+  const h = _dataHash() + '|' + (extraHash||'');
+  if(_renderCache[key] === h) return false;
+  _renderCache[key] = h;
+  return true;
+}
+
+function _invalidateCache() {
+  Object.keys(_renderCache).forEach(k => delete _renderCache[k]);
+}
+
+var _currentPage = '';
+
+function showPage(id) {
+  // 1. Troca visual imediata — sem bloquear o browser
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+
+  const sameTab = _currentPage === id;
+  _currentPage = id;
+
+  // Config não tem dados pesados, renderiza direto
+  if(id === 'config') { renderConfig(); return; }
+
+  // 2. Render adiado — deixa o browser pintar a aba primeiro
+  requestAnimationFrame(function() {
+    if(id==='dashboard')  { if(!sameTab || _needsRender('dashboard', _filterHash())) renderDashboard(); }
+    if(id==='clientes')   { if(!sameTab || _needsRender('clientes',  _filterHash())) renderClientesTable(); }
+    if(id==='produtos')   { if(!sameTab || _needsRender('produtos',  _filterHash())) renderProdutosTable(); }
+    if(id==='vendedores') { if(!sameTab || _needsRender('vendedores',_filterHash())) { populateVendedorSelect(); renderVendedorDetail(); renderRankingVendedores(); } }
+    if(id==='bonus')      { if(!sameTab || _needsRender('bonus',     _filterHash())) renderBonus(); }
+    if(id==='carteira')   { if(!sameTab || _needsRender('carteira',  _filterHash())) renderCarteira(); }
+    if(id==='baseativa')  { if(!sameTab || _needsRender('baseativa', '')) renderBaseAtiva(); }
+  });
+}
+
+// ===================== TOAST =====================
+function notify(msg, tipo='ok') {
+  const t = document.getElementById('toast');
+  const d = document.createElement('div');
+  d.className = `toast-msg toast-${tipo}`;
+  d.textContent = msg;
+  t.appendChild(d);
+  setTimeout(() => d.remove(), 3500);
+}
+
+// ===================== FILTERS =====================
+function populateFilters() {
+  const meses = [...new Set(STATE.vendas.map(v => v._mes))].sort();
+  const anos  = [...new Set(STATE.vendas.map(v => v._ano))].sort();
+
+  // Preencher min/max dos inputs month com o range das vendas disponíveis
+  if(STATE.vendas.length) {
+    const anosmes = STATE.vendas.map(v=>v._ano+'-'+v._mes).filter(Boolean).sort();
+    const minAM = anosmes[0];
+    const maxAM = anosmes[anosmes.length-1];
+    ['fcar-data-ini','fc-data-ini'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) { el.min = minAM; if(!el.value || el.value < minAM) el.value = minAM; }
+    });
+    ['fcar-data-fim','fc-data-fim'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) { el.max = maxAM; el.value = maxAM; }
+    });
+  }
+  const vendedores = [...new Set(STATE.vendas.map(v => v.vendedor).filter(Boolean))].sort();
+  const segmentos  = [...new Set(STATE.vendas.map(v => v.segmento).filter(Boolean))].sort();
+  const tabelas    = [...new Set(STATE.vendas.map(v => v.tabela).filter(Boolean))].sort();
+
+  const situacoes = [...new Set(STATE.vendas.map(v=>v.situacao).filter(Boolean))].sort();
+  const MESES_NOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  function fillSelect(id, items, labelFn) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const cur = el.value;
+    el.innerHTML = '<option value="">Todos</option>';
+    items.forEach(i => { const o = document.createElement('option'); o.value=i; o.textContent=labelFn?labelFn(i):i; el.appendChild(o); });
+    if([...el.options].some(o=>o.value===cur)) el.value=cur;
+  }
+
+  ['f-mes','fc-mes','fp-mes','fv-mes'].forEach(id => fillSelect(id, meses, m => MESES_NOME[+m]||m));
+  ['f-ano','fc-ano','fp-ano','fv-ano'].forEach(id => fillSelect(id, anos));
+  ['f-vendedor','fc-vendedor','fv-vendedor','fb-vendedor','fcar-vendedor'].forEach(id => fillSelect(id, vendedores));
+  ['f-segmento'].forEach(id => fillSelect(id, segmentos));
+  ['f-tabela'].forEach(id => fillSelect(id, tabelas));
+  fillSelect('f-situacao', situacoes);
+
+  // Carteira
+  const segsCart = [...new Set(STATE.clientes.map(c=>c.segmento).filter(Boolean))].sort();
+  const ufsCart  = [...new Set(STATE.clientes.map(c=>c.uf).filter(Boolean))].sort();
+  fillSelect('fcar-seg', segsCart);
+  fillSelect('fcar-uf', ufsCart);
+
+  // Topbar período
+  if(meses.length && anos.length) {
+    const mesAtual = meses[meses.length-1];
+    const anoAtual = anos[anos.length-1];
+    // document.getElementById('topbar-periodo').textContent = `${MESES_NOME[+mesAtual]} ${anoAtual}`;
+  }
+}
+
+function getFilteredVendas() {
+  const mes = document.getElementById('f-mes')?.value || '';
+  const ano = document.getElementById('f-ano')?.value || '';
+  const vendedor = document.getElementById('f-vendedor')?.value || '';
+  const segmento = document.getElementById('f-segmento')?.value || '';
+  const tabela   = document.getElementById('f-tabela')?.value   || '';
+
+  const situacao = document.getElementById('f-situacao')?.value || '';
+  return STATE.vendas.filter(v => {
+    if(mes && v._mes !== mes) return false;
+    if(ano && v._ano !== ano) return false;
+    if(vendedor && v.vendedor !== vendedor) return false;
+    if(segmento && v.segmento !== segmento) return false;
+    if(tabela && v.tabela !== tabela) return false;
+    if(situacao && v.situacao !== situacao) return false;
+    return true;
+  });
+}
+
+
+
+function applyFilters() {
+  filteredVendas = getFilteredVendas();
+  _invalidateCache();           // força re-render nas abas ao voltar
+  renderCurrentPage();          // renderiza só a aba visível agora
+}
+
+function renderCurrentPage() {
+  const id = _currentPage;
+  if(id === 'dashboard')  renderDashboard();
+  else if(id === 'clientes')   renderClientesTable();
+  else if(id === 'produtos')   renderProdutosTable();
+  else if(id === 'vendedores') { populateVendedorSelect(); renderVendedorDetail(); renderRankingVendedores(); }
+  else if(id === 'bonus')      renderBonus();
+  else if(id === 'carteira')   renderCarteira();
+  else if(id === 'baseativa')  renderBaseAtiva();
+}
+
+function clearFilters() {
+  ['f-mes','f-ano','f-vendedor','f-segmento','f-tabela','f-situacao',
+   'fc-mes','fc-ano','fc-vendedor','fp-mes','fp-ano'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value='';
+  });
+  applyFilters();
+}
+
+// ===================== DASHBOARD =====================
+function renderDashboard() {
+  const data = filteredVendas.length ? filteredVendas : STATE.vendas;
+  if(!data.length) {
+    document.getElementById('dash-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('dash-empty').style.display = 'none';
+
+  // Faturamento: soma valor de cada item (col30 do Fácil123)
+  const totalFat = data.reduce((s,v) => s + v.valor, 0);
+  const totalNFs = new Set(data.map(v => v.nf)).size; // pedidos únicos
+  const totalCli = new Set(data.map(v => v.cliente)).size;
+  const ticket = totalNFs > 0 ? totalFat / totalNFs : 0; // por pedido
+
+  document.getElementById('kpi-fat').textContent = fmtR(totalFat);
+  document.getElementById('kpi-fat-sub').textContent = `${data.length} registros`;
+  document.getElementById('kpi-ticket').textContent = fmtR(ticket);
+  document.getElementById('kpi-ticket-sub').textContent = `${totalNFs} NFs`;
+  document.getElementById('kpi-clientes').textContent = totalCli;
+  document.getElementById('kpi-clientes-sub').textContent = 'clientes distintos';
+  document.getElementById('kpi-nfs').textContent = totalNFs;
+  document.getElementById('kpi-nfs-sub').textContent = 'notas fiscais';
+
+  // Faturamento por dia
+  const porDia = {};
+  data.forEach(v => {
+    const d = v._dia || '?';
+    porDia[d] = (porDia[d]||0) + v.valor;
+  });
+  const diasOrdenados = Object.keys(porDia).sort((a,b)=>+a-+b);
+  renderChart('chart-dias','bar',diasOrdenados,diasOrdenados.map(d=>porDia[d]),{horizontal:false,label:'Faturamento (R$)'});
+
+  // Top 10 clientes
+  const porCliente = groupSum(data, v=>v.cliente, v=>v.valor);
+  const top10 = Object.entries(porCliente).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  renderChart('chart-top-clientes','bar',top10.map(x=>truncate(x[0],22)),top10.map(x=>x[1]),{horizontal:true,label:'R$'});
+
+  // Por tabela de preço
+  const porTabela = groupSum(data, v=>v.tabela||'Não informado', v=>v.valor);
+  renderChart('chart-tabela','doughnut',Object.keys(porTabela),Object.values(porTabela),{label:'R$'});
+
+  // Por vendedor
+  const porVend = groupSum(data, v=>v.vendedor||'Não informado', v=>v.valor);
+  const topVend = Object.entries(porVend).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  renderChart('chart-vendedores','bar',topVend.map(x=>truncate(x[0],18)),topVend.map(x=>x[1]),{horizontal:true,label:'R$'});
+
+  // Por segmento
+  const porSeg = groupSum(data, v=>v.segmento||'Não informado', v=>v.valor);
+  const segOrdenado = Object.entries(porSeg).sort((a,b)=>b[1]-a[1]);
+  renderChart('chart-segmento','bar',segOrdenado.map(x=>truncate(x[0],20)),segOrdenado.map(x=>x[1]),{horizontal:false,label:'R$'});
+}
+
+// ===================== CLIENTES TABLE =====================
+function renderClientesTable() {
+  const data = filteredVendas.length ? filteredVendas : STATE.vendas;
+  const search = (document.getElementById('search-clientes')?.value||'').toLowerCase();
+  const fvend = document.getElementById('fc-vendedor')?.value||'';
+
+  const por = {};
+  data.forEach(v => {
+    const k = v.cliente;
+    if(!por[k]) por[k]={cliente:k,vendedor:v.vendedor||'',segmento:v.segmento||'',nfs:new Set(),valor:0};
+    por[k].nfs.add(v.nf||v._idx);
+    por[k].valor += v.valor;
+  });
+
+  let rows = Object.values(por).sort((a,b)=>b.valor-a.valor);
+  if(search) rows = rows.filter(r=>r.cliente.toLowerCase().includes(search));
+  if(fvend) rows = rows.filter(r=>r.vendedor===fvend);
+
+  const total = rows.reduce((s,r)=>s+r.valor,0);
+  const tbody = document.getElementById('tbody-clientes');
+  tbody.innerHTML = rows.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><b>${r.cliente}</b></td>
+      <td>${r.vendedor}</td>
+      <td>${r.segmento}</td>
+      <td class="right">${r.nfs.size}</td>
+      <td class="right"><b>${fmtR(r.valor)}</b></td>
+      <td class="right">${pct(r.valor,total)}</td>
+    </tr>`).join('');
+  document.getElementById('clientes-empty').style.display = rows.length?'none':'block';
+}
+
+// ===================== PRODUTOS TABLE =====================
+function renderProdutosTable() {
+  const data = filteredVendas.length ? filteredVendas : STATE.vendas;
+  const search = (document.getElementById('search-produtos')?.value||'').toLowerCase();
+
+  const por = {};
+  data.forEach(v => {
+    const k = v.produto||'(sem produto)';
+    if(k==='(sem produto)') return;
+    if(!por[k]) por[k]={produto:k,qtd:0,valor:0};
+    por[k].qtd += v.qtd||1;
+    // Usar valor_item para ranking de produtos (não duplicar total da NF)
+    por[k].valor += (v.valor_item || v.valor || 0);
+  });
+
+  let rows = Object.values(por).sort((a,b)=>b.valor-a.valor);
+  if(search) rows = rows.filter(r=>r.produto.toLowerCase().includes(search));
+
+  const total = rows.reduce((s,r)=>s+r.valor,0);
+  const tbody = document.getElementById('tbody-produtos');
+  tbody.innerHTML = rows.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.produto}</td>
+      <td class="right">${fmtN(r.qtd)}</td>
+      <td class="right"><b>${fmtR(r.valor)}</b></td>
+      <td class="right">${pct(r.valor,total)}</td>
+    </tr>`).join('');
+  document.getElementById('produtos-empty').style.display = rows.length?'none':'block';
+}
+
+// ===================== VENDEDORES =====================
+function populateVendedorSelect() {
+  const vendedores = [...new Set(STATE.vendas.map(v=>v.vendedor).filter(Boolean))].sort();
+  const sel = document.getElementById('fv-vendedor');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  vendedores.forEach(v => {
+    const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o);
+  });
+  if(cur) sel.value=cur;
+}
+
+function renderVendedorDetail() {
+  const vend = document.getElementById('fv-vendedor')?.value||'';
+  const mes  = document.getElementById('fv-mes')?.value||'';
+  const ano  = document.getElementById('fv-ano')?.value||'';
+
+  if(!vend) {
+    ['vd-header','vd-kpis','vd-tabela-wrap'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('vd-empty').style.display='block';
+    return;
+  }
+
+  let data = STATE.vendas.filter(v=>v.vendedor===vend);
+  if(mes) data = data.filter(v=>v._mes===mes);
+  if(ano) data = data.filter(v=>v._ano===ano);
+
+  const pctComissao = (STATE.config.comissoes[vend] || 5);
+  const totalFat = data.reduce((s,v)=>s+v.valor,0);
+  const totalNFs = new Set(data.map(v=>v.nf||v._idx)).size;
+  const comissao = totalFat * pctComissao / 100;
+
+  document.getElementById('vd-nome').textContent = vend;
+  document.getElementById('vd-periodo').textContent = mes&&ano?`${mes}/${ano}`:mes?`Mês ${mes}`:ano?ano:'Todo o período';
+  document.getElementById('vd-canal').textContent = '';
+  document.getElementById('vd-fat').textContent = fmtR(totalFat);
+  document.getElementById('vd-nfs').textContent = totalNFs;
+  document.getElementById('vd-comissao').textContent = fmtR(comissao);
+  document.getElementById('vd-pct').textContent = pctComissao;
+
+  ['vd-header','vd-kpis','vd-tabela-wrap'].forEach(id=>document.getElementById(id).style.display='');
+  document.getElementById('vd-empty').style.display='none';
+
+  // Por cliente
+  const por = {};
+  data.forEach(v => {
+    const k=v.cliente;
+    if(!por[k]) por[k]={cliente:k,segmento:v.segmento||'',nfs:new Set(),valor:0};
+    por[k].nfs.add(v.nf||v._idx);
+    por[k].valor += v.valor;
+  });
+  const rows = Object.values(por).sort((a,b)=>b.valor-a.valor);
+  const tbody = document.getElementById('tbody-vd-clientes');
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td>${r.cliente}</td>
+      <td>${r.segmento}</td>
+      <td class="right">${r.nfs.size}</td>
+      <td class="right">${fmtR(r.valor)}</td>
+      <td class="right">${fmtR(r.valor*pctComissao/100)}</td>
+    </tr>`).join('');
+
+  renderRankingVendedores();
+}
+
+function renderRankingVendedores() {
+  const por = {};
+  STATE.vendas.forEach(v=>{
+    const k=v.vendedor||'(sem vendedor)';
+    if(!por[k]) por[k]={vendedor:k,nfs:new Set(),valor:0};
+    por[k].nfs.add(v.nf||v._idx);
+    por[k].valor += v.valor;
+  });
+  const total = Object.values(por).reduce((s,r)=>s+r.valor,0);
+  const rows = Object.values(por).sort((a,b)=>b.valor-a.valor);
+  const tbody = document.getElementById('tbody-rank-vend');
+  tbody.innerHTML = rows.map((r,i)=>{
+    const pctC = STATE.config.comissoes[r.vendedor]||5;
+    return `<tr>
+      <td>${i+1}</td><td><b>${r.vendedor}</b></td>
+      <td class="right">${r.nfs.size}</td>
+      <td class="right">${fmtR(r.valor)}</td>
+      <td class="right">${pct(r.valor,total)}</td>
+      <td class="right">${fmtR(r.valor*pctC/100)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ===================== BÔNUS =====================
+function renderBonus() {
+  const fvend = document.getElementById('fb-vendedor')?.value||'';
+  const bonusPct = STATE.config.bonusPct||2;
+  document.getElementById('b-pct-label').textContent = bonusPct;
+
+  // Clientes novos = aparecem nas vendas mas não estão no histórico ANTES deste import
+  const novos = [...new Set(STATE.vendas.map(v=>v.cliente))].filter(c=>STATE.historico.has('NOVO::'+c));
+
+  const por = {};
+  STATE.vendas.filter(v=>novos.includes(v.cliente)).forEach(v=>{
+    const k=v.cliente;
+    if(!por[k]) por[k]={cliente:k,vendedor:v.vendedor||'',segmento:v.segmento||'',nfs:new Set(),valor:0};
+    por[k].nfs.add(v.nf||v._idx);
+    por[k].valor += v.valor;
+  });
+
+  let rows = Object.values(por).sort((a,b)=>b.valor-a.valor);
+  if(fvend) rows = rows.filter(r=>r.vendedor===fvend);
+
+  const totalFat = rows.reduce((s,r)=>s+r.valor,0);
+  const totalBonus = totalFat * bonusPct / 100;
+
+  document.getElementById('b-qtd').textContent = rows.length;
+  document.getElementById('b-fat').textContent = fmtR(totalFat);
+  document.getElementById('b-bonus').textContent = fmtR(totalBonus);
+
+  const tbody = document.getElementById('tbody-bonus');
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td>${r.cliente}</td><td>${r.vendedor}</td><td>${r.segmento}</td>
+      <td class="right">${r.nfs.size}</td>
+      <td class="right">${fmtR(r.valor)}</td>
+      <td class="right"><b>${fmtR(r.valor*bonusPct/100)}</b></td>
+    </tr>`).join('');
+  document.getElementById('bonus-empty').style.display = rows.length?'none':'block';
+}
+
+// ===================== CARTEIRA =====================
+function renderCarteira() {
+  const fstatus = document.getElementById('fcar-status')?.value||'';
+  const fvend   = document.getElementById('fcar-vendedor')?.value||'';
+  const fseg    = document.getElementById('fcar-seg')?.value||'';
+  const fuf     = document.getElementById('fcar-uf')?.value||'';
+  const search  = (document.getElementById('search-carteira')?.value||'').toLowerCase();
+
+  // Filtro de período da Carteira
+  const fCarMes = document.getElementById('fcar-mes')?.value || '';
+  const fCarAno = document.getElementById('fcar-ano')?.value || '';
+
+  const vendasCart = STATE.vendas.filter(v => {
+    if(fCarMes && v._mes !== fCarMes) return false;
+    if(fCarAno && v._ano !== fCarAno) return false;
+    return true;
+  });
+
+  // Calcular meses disponíveis — últimos 6 com possibilidade de recuo
+  const fOffset = parseInt(document.getElementById('fcar-offset')?.value || '0');
+  const todosMesesCart = [...new Set(vendasCart.map(v=>`${v._ano}-${v._mes}`))].filter(Boolean).sort();
+  // Recuar: pegar 6 meses terminando em (último - offset)
+  const idxFim = Math.max(0, todosMesesCart.length - 1 - fOffset);
+  const idxIni = Math.max(0, idxFim - 5);
+  const mesesDisp = todosMesesCart.slice(idxIni, idxFim + 1);
+
+  // Popular selects de mês e ano da Carteira
+  {
+    const todosAnosCar  = [...new Set(STATE.vendas.map(v=>v._ano))].filter(Boolean).sort().reverse();
+    const todosMesesCar = [...new Set(STATE.vendas.map(v=>v._mes))].filter(Boolean).sort();
+    const selCMes = document.getElementById('fcar-mes');
+    const selCAno = document.getElementById('fcar-ano');
+    if(selCMes) {
+      const curMes = selCMes.value || fCarMes;
+      selCMes.innerHTML = '<option value="">Todos</option>' +
+        todosMesesCar.map(m=>'<option value="'+m+'"'+(m===curMes?' selected':'')+'>'+m+'</option>').join('');
+    }
+    if(selCAno) {
+      const curAno = selCAno.value || fCarAno || (todosAnosCar[0]||'');
+      selCAno.innerHTML = '<option value="">Todos</option>' +
+        todosAnosCar.map(a=>'<option value="'+a+'"'+(a===curAno?' selected':'')+'>'+a+'</option>').join('');
+    }
+  }
+  const situacoes = [...new Set(STATE.vendas.map(v=>v.situacao).filter(Boolean))].sort();
+  const MESES_NOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  // Atualizar cabeçalhos
+  mesesDisp.forEach((m,i)=>{
+    const el = document.getElementById(`th-m${i+1}`);
+    if(el) { const [a,mes]=m.split('-'); el.textContent=`${MESES_NOME[+mes]}/${a.slice(2)}`; }
+  });
+  for(let i=mesesDisp.length;i<6;i++) {
+    const el = document.getElementById(`th-m${i+1}`);
+    if(el) el.textContent='—';
+  }
+
+  // Faturamento por cliente por mês — usa vendasCart (respeita filtro de período)
+  const fatPorClienteMes = {};
+  vendasCart.forEach(v=>{
+    const key = `${v._ano}-${v._mes}`;
+    if(!fatPorClienteMes[v.cliente]) fatPorClienteMes[v.cliente]={};
+    fatPorClienteMes[v.cliente][key] = (fatPorClienteMes[v.cliente][key]||0)+v.valor;
+  });
+
+  // Montar linhas da carteira
+  const clientesCad = STATE.clientes.length ? STATE.clientes : [...new Set(vendasCart.map(v=>v.cliente))].map(n=>({nome:n,vendedor:vendasCart.find(v=>v.cliente===n)?.vendedor||'',segmento:vendasCart.find(v=>v.cliente===n)?.segmento||'',uf:''}));
+
+  const ANO_ATUAL = mesesDisp.length?mesesDisp[mesesDisp.length-1].split('-')[0]:'';
+  const ANO_ANT   = ANO_ATUAL ? String(+ANO_ATUAL-1) : '';
+
+  let rows = clientesCad.map(c=>{
+    const nome = c.nome||c.razao||'';
+    const meses = mesesDisp.map(m=>(fatPorClienteMes[nome]?.[m])||0);
+    const ytdAtual = Object.entries(fatPorClienteMes[nome]||{}).filter(([k])=>k.startsWith(ANO_ATUAL)).reduce((s,[,v])=>s+v,0);
+    const ytdAnt   = Object.entries(fatPorClienteMes[nome]||{}).filter(([k])=>k.startsWith(ANO_ANT)).reduce((s,[,v])=>s+v,0);
+    const lacuna   = ytdAtual - ytdAnt;
+    const crescPct = ytdAnt>0 ? lacuna/ytdAnt : null;
+    const mesAtual = meses[meses.length-1]||0;
+    const mesAnt   = meses[meses.length-2]||0;
+
+    let status = 'INATIVO';
+    const mesesComVenda = meses.filter(m=>m>0).length;
+    if(mesAtual>0) status = 'ATIVO';
+    else if(mesAnt>0) status = 'RISCO INATIVIDADE';
+    else if(mesesComVenda===0 && !ytdAnt) status = 'INATIVO';
+    if(c.arquivado && c.arquivado.toLowerCase().includes('desativ')) status='INATIVO';
+    if(STATE.historico.has('NOVO::'+nome)) status='CLIENTE NOVO';
+
+    return {...c, nome, meses, ytdAtual, ytdAnt, lacuna, crescPct, status};
+  });
+
+  // Filtros
+  if(fstatus) rows=rows.filter(r=>r.status===fstatus);
+  if(fvend)   rows=rows.filter(r=>(r.vendedor||'')===(fvend));
+  if(fseg)    rows=rows.filter(r=>(r.segmento||'')===(fseg));
+  if(fuf)     rows=rows.filter(r=>(r.uf||'')===(fuf));
+  if(search)  rows=rows.filter(r=>r.nome.toLowerCase().includes(search));
+
+  // KPIs
+  const all = clientesCad.map(c=>{
+    const nome=c.nome||''; const mesAtual=fatPorClienteMes[nome]?.[mesesDisp[mesesDisp.length-1]]||0;
+    const mesAnt=fatPorClienteMes[nome]?.[mesesDisp[mesesDisp.length-2]]||0;
+    let status='INATIVO';
+    if(mesAtual>0) status='ATIVO';
+    else if(mesAnt>0) status='RISCO INATIVIDADE';
+    if(STATE.historico.has('NOVO::'+nome)) status='CLIENTE NOVO';
+    return status;
+  });
+  document.getElementById('car-total').textContent  = all.length;
+  document.getElementById('car-ativo').textContent  = all.filter(s=>s==='ATIVO'||s==='CLIENTE NOVO').length;
+  document.getElementById('car-risco').textContent  = all.filter(s=>s==='RISCO INATIVIDADE').length;
+  document.getElementById('car-inativo').textContent= all.filter(s=>s==='INATIVO').length;
+
+  // Render tabela
+  const maxVal = Math.max(...rows.flatMap(r=>r.meses).filter(v=>v>0), 1);
+  const statusBadge = {
+    'ATIVO':'<span class="badge b-ok">✅ Ativo</span>',
+    'CLIENTE NOVO':'<span class="badge b-novo">🆕 Novo</span>',
+    'RISCO INATIVIDADE':'<span class="badge b-warn">⚠️ Risco</span>',
+    'INATIVO':'<span class="badge b-danger">🔴 Inativo</span>'
+  };
+
+  const tbody = document.getElementById('tbody-carteira');
+  tbody.innerHTML = rows.map(r=>{
+    const mesHTMLs = mesesDisp.map((m,i)=>{
+      const v=r.meses[i]||0;
+      const cls = v===0?'heat-0':v<500?'heat-1':v<2000?'heat-2':v<5000?'heat-3':'heat-4';
+      return `<td class="right"><span class="heat-cell ${cls}">${v?fmtR(v):'—'}</span></td>`;
+    });
+    for(let i=mesesDisp.length;i<6;i++) mesHTMLs.push('<td class="right">—</td>');
+    const crescTxt = r.crescPct!==null ? `${r.crescPct>=0?'+':''}${(r.crescPct*100).toFixed(1)}%` : '—';
+    const lacunaTxt = r.ytdAnt>0 ? `${r.lacuna>=0?'+':''}${fmtR(r.lacuna)}` : '—';
+    const cliInfo = STATE.clientes.find(c=>c.nome===r.nome);
+    const endParts = cliInfo ? [cliInfo.endereco, cliInfo.numero, cliInfo.bairro, cliInfo.cidade].filter(Boolean) : [];
+    const endStr   = endParts.join(', ') || '—';
+    return `<tr>
+      <td><b>${r.nome}</b></td>
+      <td style="font-size:11px;color:var(--text2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${endStr}">${endStr}</td>
+      <td>${r.vendedor||''}</td><td>${r.segmento||''}</td><td>${r.uf||''}</td>
+      ${mesHTMLs.join('')}
+      <td class="right"><b>${fmtR(r.ytdAtual)}</b></td>
+      <td class="right" style="color:${r.lacuna>=0?'#2e7d32':'#c62828'}">${lacunaTxt}</td>
+      <td class="right" style="color:${(r.crescPct||0)>=0?'#2e7d32':'#c62828'}">${crescTxt}</td>
+      <td>${statusBadge[r.status]||r.status}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('carteira-empty').style.display = rows.length?'none':'block';
+}
+
+// ===================== CONFIG =====================
+function renderConfig() {
+  // URL do script
+  const urlEl = document.getElementById('cfg-script-url');
+  if(urlEl) urlEl.value = STATE.config.scriptUrl || '';
+
+  const vendedores = [...new Set(STATE.vendas.map(v=>v.vendedor).filter(Boolean))].sort();
+  const div = document.getElementById('config-comissoes');
+  if(!vendedores.length) { div.innerHTML='<div style="color:var(--text3);font-size:13px">Importe o CSV de vendas para configurar comissões por vendedor.</div>'; }
+  else {
+    div.innerHTML = vendedores.map(v=>`
+      <div class="config-row">
+        <div class="config-label">${v}</div>
+        <input type="number" class="config-input" id="cfg-comissao-${v.replace(/\s/g,'_')}"
+          value="${STATE.config.comissoes[v]||5}" min="0" max="100" step="0.5"> %
+      </div>`).join('');
+  }
+  document.getElementById('cfg-bonus-pct').value = STATE.config.bonusPct||2;
+  document.getElementById('cfg-meses-carteira').value = STATE.config.mesesCarteira||6;
+  updateHistoricoInfo();
+}
+
+function salvarScriptUrl() {
+  const url = document.getElementById('cfg-script-url').value.trim();
+  if(url && !url.startsWith('https://script.google.com')) {
+    notify('URL inválida — deve começar com https://script.google.com','error'); return;
+  }
+  STATE.config.scriptUrl = url;
+  saveToStorage();
+  const st = document.getElementById('cfg-url-status');
+  if(st) st.innerHTML = url ? '✅ URL salva com sucesso!' : '⚠️ URL removida.';
+  notify('URL salva!','ok');
+}
+
+async function testarConexao() {
+  const url = STATE.config.scriptUrl;
+  if(!url) { notify('Configure a URL do Apps Script primeiro','warn'); return; }
+  const st = document.getElementById('cfg-url-status');
+  st.textContent = '🔄 Testando conexão...';
+  try {
+    const d = await apiFetch(url + '?action=getStats');
+    if(d.ok) {
+      st.innerHTML = `✅ Conectado! Total na planilha: <b>${d.result.total}</b> clientes · Ativos: <b>${d.result.ativos}</b>`;
+      notify('Conexão OK!','ok');
+    } else {
+      st.textContent = '❌ Script retornou erro: ' + d.error;
+      notify('Erro no script','error');
+    }
+  } catch(e) {
+    st.textContent = '❌ Falha na conexão: ' + e.message;
+    notify('Sem conexão com o script','error');
+  }
+}
+
+function showLoading(msg) {
+  const el = document.getElementById('loading-overlay');
+  const m  = document.getElementById('loading-msg');
+  if(el) el.style.display = 'flex';
+  if(m)  m.textContent = msg || 'Processando...';
+}
+function hideLoading() {
+  const el = document.getElementById('loading-overlay');
+  if(el) el.style.display = 'none';
+}
+function setLoadingMsg(msg, pct, sub) {
+  const m = document.getElementById('loading-msg');
+  const b = document.getElementById('loading-bar');
+  const s = document.getElementById('loading-sub');
+  if(m) m.textContent = msg;
+  if(b && pct !== undefined) b.style.width = Math.min(100, pct) + '%';
+  if(s && sub !== undefined) s.textContent = sub;
+}
+
+async function importarESincronizarVendas() {
+  if(!rawFileData.vendas || !rawFileData.vendas.length) {
+    notify('Arraste o arquivo XLSX de vendas primeiro na área acima','warn');
+    return;
+  }
+  const url = STATE.config.scriptUrl;
+  // SEMPRE adicionar — nunca apaga dados anteriores automaticamente
+  const limpar = false;
+
+  showLoading('⏳ Processando vendas...');
+  await new Promise(function(r){ setTimeout(r,50); });
+  try {
+    importarVendas();
+    if(!STATE.vendas.length) {
+      hideLoading();
+      notify('Nenhum dado válido encontrado no arquivo','error');
+      return;
+    }
+    if(!url) {
+      hideLoading();
+      notify('✔ ' + STATE.vendas.length + ' registros processados. Configure a URL do Sheets para enviar.','warn');
+      return;
+    }
+    setLoadingMsg('⬆️ Enviando ' + STATE.vendas.length + ' registros ao Sheets...');
+    await new Promise(function(r){ setTimeout(r,50); });
+    await sincronizarVendas(limpar);
+  } catch(e) {
+    notify('Erro: ' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function importarESincronizarClientes() {
+  if(!rawFileData.clientes || !rawFileData.clientes.length) {
+    notify('Arraste o arquivo XLSX de clientes primeiro na área acima','warn');
+    return;
+  }
+  const url = STATE.config.scriptUrl;
+  // SEMPRE adicionar — nunca apaga dados anteriores automaticamente
+  const limpar = false;
+
+  showLoading('⏳ Processando clientes...');
+  await new Promise(function(r){ setTimeout(r,50); });
+  try {
+    importarClientes();
+    if(!STATE.clientes.length) {
+      hideLoading();
+      notify('Nenhum cliente válido encontrado no arquivo','error');
+      return;
+    }
+    if(!url) {
+      hideLoading();
+      notify('✔ ' + STATE.clientes.length + ' clientes processados. Configure a URL do Sheets para enviar.','warn');
+      return;
+    }
+    setLoadingMsg('⬆️ Enviando ' + STATE.clientes.length + ' clientes ao Sheets...');
+    await new Promise(function(r){ setTimeout(r,50); });
+    await sincronizarClientes(limpar);
+  } catch(e) {
+    notify('Erro: ' + e.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function sincronizarClientes(limparAntes) {
+  const url = STATE.config.scriptUrl;
+  if(!url) { notify('Configure a URL do Apps Script nas Configurações','warn'); return; }
+  if(!STATE.clientes.length) { notify('Nenhum cliente importado para sincronizar','warn'); return; }
+  if(limparAntes && !confirm(`Isso vai APAGAR todos os dados na planilha e reinserir ${STATE.clientes.length} clientes. Confirma?`)) return;
+
+  const st = document.getElementById('sync-status');
+  st.textContent = `🔄 Enviando ${STATE.clientes.length} clientes...`;
+
+  // Enviar em lotes de 200 para não exceder limite do Apps Script
+  const LOTE = 200;
+  let inseridos = 0, atualizados = 0;
+
+  for(let i=0; i<STATE.clientes.length; i+=LOTE) {
+    const lote = STATE.clientes.slice(i, i+LOTE);
+    const progC = Math.min(i+LOTE, STATE.clientes.length);
+    const pctC  = Math.round(progC / STATE.clientes.length * 100);
+    st.textContent = `${progC} de ${STATE.clientes.length} (${pctC}%)`;
+    setLoadingMsg('⬆️ Enviando clientes ao Sheets', pctC, `${progC} de ${STATE.clientes.length} clientes enviados`);
+    try {
+      const d = await apiFetch(url, {
+        method:'POST',
+        body: JSON.stringify({
+          action: 'upsertClientes',
+          data: { clientes: lote, limparAntes: limparAntes && i===0 }
+        })
+      });
+      if(d.ok) { inseridos += d.result.inseridos; atualizados += d.result.atualizados; }
+      else { st.textContent = '❌ Erro no lote: ' + d.error; notify('Erro na sincronização','error'); return; }
+    } catch(e) { st.textContent = '❌ Falha: ' + e.message; notify('Erro na sincronização','error'); return; }
+  }
+
+  hideLoading();
+  st.innerHTML = `✅ Sincronizado! <b>${inseridos}</b> inseridos · <b>${atualizados}</b> atualizados`;
+  notify(`✔ ${inseridos + atualizados} clientes sincronizados com o Sheets!`,'ok');
+}
+
+async function debugVendas() {
+  const url = STATE.config.scriptUrl;
+  if(!url) { notify('Configure a URL primeiro','warn'); return; }
+  if(!STATE.vendas.length) { notify('Importe o CSV de vendas primeiro','warn'); return; }
+
+  const st = document.getElementById('sync-vendas-status');
+  st.textContent = '🔍 Testando envio de 1 registro...';
+
+  const amostra = [{
+    idx:        STATE.vendas[0]._idx,
+    mes:        STATE.vendas[0]._mes,
+    ano:        STATE.vendas[0]._ano,
+    dia:        STATE.vendas[0]._dia,
+    primeiro:   STATE.vendas[0]._primeiroDaVenda ? 'Sim' : 'Não',
+    nf:         STATE.vendas[0].nf,
+    nf_num:     STATE.vendas[0].nf_num || '',
+    cliente:    STATE.vendas[0].cliente,
+    cidade:     STATE.vendas[0].cidade || '',
+    uf:         STATE.vendas[0].uf || '',
+    situacao:   STATE.vendas[0].situacao || '',
+    etapa:      STATE.vendas[0].etapa || '',
+    produto:    STATE.vendas[0].produto || '',
+    qtd:        STATE.vendas[0].qtd || 0,
+    vlr_unit:   STATE.vendas[0].vlr_unit || 0,
+    valor:      STATE.vendas[0].valor || 0,
+    valor_item: STATE.vendas[0].valor_item || 0,
+    desconto:   STATE.vendas[0].desconto || 0,
+    frete:      STATE.vendas[0].frete || 0,
+    vendedor:   STATE.vendas[0].vendedor || '',
+    segmento:   STATE.vendas[0].segmento || '',
+    tabela:     STATE.vendas[0].tabela || '',
+    motorista:  STATE.vendas[0].motorista || '',
+    entrega:    STATE.vendas[0].entrega || '',
+  }];
+
+  console.log('DEBUG - amostra enviada:', JSON.stringify(amostra[0], null, 2));
+  st.innerHTML = `<b>Amostra local (ver console F12):</b><br>
+    idx=${amostra[0].idx} | nf=${amostra[0].nf} | cliente=${amostra[0].cliente}<br>
+    vendedor=${amostra[0].vendedor} | valor=${amostra[0].valor} | produto=${amostra[0].produto}`;
+
+  try {
+    const d = await apiFetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'debug_vendas', data: { vendas: amostra } })
+    });
+    if(d.ok) {
+      st.innerHTML += `<br><b style="color:var(--accent)">✅ Script recebeu:</b> ${JSON.stringify(d.result)}`;
+      notify('Diagnóstico OK — veja o resultado abaixo','ok');
+    } else {
+      st.innerHTML += `<br><b style="color:var(--danger)">❌ Erro do script:</b> ${d.error}`;
+    }
+  } catch(e) {
+    st.innerHTML += `<br><b style="color:var(--danger)">❌ Falha de conexão:</b> ${e.message}`;
+  }
+}
+
+async function sincronizarVendas(limparAntes) {
+  const url = STATE.config.scriptUrl;
+  if(!url) { notify('Configure a URL do Apps Script nas Configurações','warn'); return; }
+  if(!STATE.vendas.length) { notify('Nenhum dado de vendas importado para sincronizar','warn'); return; }
+  if(limparAntes && !confirm('Isso vai APAGAR todas as vendas da planilha. Confirma?')) return;
+
+  const st = document.getElementById('sync-vendas-status');
+  st.textContent = `🔄 Preparando ${STATE.vendas.length} registros...`;
+
+  // Preparar dados — enviar campos relevantes
+  const dados = STATE.vendas.map(v => ({
+    idx:        v._idx,
+    mes:        v._mes,
+    ano:        v._ano,
+    dia:        v._dia,
+    primeiro:   v._primeiroDaVenda ? 'Sim' : 'Não',
+    novo:       v._isNovo ? 'Sim' : 'Não',
+    datacad:    v._datacad || '',
+    venda_id:   v.venda_id || '',
+    nf:         v.nf || '',
+    nf_num:     v.nf_num || '',
+    venda:      v.venda || '',
+    cliente:    v.cliente,
+    cidade:     v.cidade || '',
+    uf:         v.uf || '',
+    situacao:   v.situacao || '',
+    etapa:      v.etapa || '',
+    prod_cod:   v.prod_cod || '',
+    produto:    v.produto || '',
+    un:         v.un || '',
+    qtd:        v.qtd || 0,
+    vlr_unit:   v.vlr_unit || 0,
+    valor:      v.valor || 0,
+    valor_item: v.valor_item || 0,
+    desconto:   v.desconto || 0,
+    frete:      v.frete || 0,
+    vendedor:   v.vendedor || '',
+    segmento:   v.segmento || '',
+    tabela:     v.tabela || '',
+    motorista:  v.motorista || '',
+    entrega:    v.entrega || '',
+  }));
+
+  const LOTE = 300;
+  let inseridos = 0, atualizados = 0;
+
+  for(let i = 0; i < dados.length; i += LOTE) {
+    const lote = dados.slice(i, i + LOTE);
+    const progV = Math.min(i + LOTE, dados.length);
+    const pctV  = Math.round(progV / dados.length * 100);
+    st.textContent = `${progV} de ${dados.length} (${pctV}%)`;
+    setLoadingMsg('⬆️ Enviando vendas ao Sheets', pctV, `${progV} de ${dados.length} registros enviados`);
+    try {
+      const d = await apiFetch(url, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'upsertVendas',
+          data: { vendas: lote, limparAntes: limparAntes && i === 0 }
+        })
+      });
+      if(d.ok) {
+        inseridos  += d.result.inseridos  || 0;
+        atualizados += d.result.atualizados || 0;
+      } else {
+        st.textContent = '❌ Erro: ' + d.error;
+        notify('Erro na sincronização de vendas','error');
+        return;
+      }
+    } catch(e) {
+      st.textContent = '❌ Falha: ' + e.message;
+      notify('Erro na sincronização de vendas','error');
+      return;
+    }
+  }
+
+  const fat = STATE.vendas.filter(v=>v._primeiroDaVenda).reduce((s,v)=>s+v.valor,0);
+  hideLoading();
+  const ignorados = 0; // contagem acumulada não disponível neste escopo
+  const msg = ignorados > 0
+    ? `✅ <b>${inseridos}</b> inseridos · <b>${atualizados}</b> atualizados · <b>${ignorados}</b> duplicatas ignoradas`
+    : `✅ <b>${inseridos}</b> inseridos · <b>${atualizados}</b> atualizados`;
+  st.innerHTML = msg + ` · Faturamento: <b>R$ ${fat.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b>`;
+  notify(ignorados > 0
+    ? `✔ ${inseridos + atualizados} registros sincronizados · ${ignorados} duplicatas ignoradas`
+    : `✔ ${inseridos + atualizados} registros de vendas sincronizados!`, 'ok');
+}
+
+function salvarConfig() {
+  const vendedores = [...new Set(STATE.vendas.map(v=>v.vendedor).filter(Boolean))];
+  vendedores.forEach(v=>{
+    const el = document.getElementById('cfg-comissao-'+v.replace(/\s/g,'_'));
+    if(el) STATE.config.comissoes[v] = parseFloat(el.value)||5;
+  });
+  STATE.config.bonusPct = parseFloat(document.getElementById('cfg-bonus-pct').value)||2;
+  STATE.config.mesesCarteira = parseInt(document.getElementById('cfg-meses-carteira').value)||6;
+  saveToStorage();
+  notify('Configurações salvas!','ok');
+}
+
+function updateHistoricoInfo() {
+  const el = document.getElementById('historico-info');
+  if(el) el.textContent = 'Histórico não salvo localmente — dados ficam no Sheets.';
+}
+
+function resetHistorico() {
+  if(!confirm('Resetar histórico de clientes? Todos serão considerados novos na próxima importação.')) return;
+  STATE.historico.clear();
+  saveToStorage();
+  updateHistoricoInfo();
+  notify('Histórico resetado','warn');
+}
+
+// ===================== IMPORT =====================
+let rawFileData = {vendas:null, clientes:null};
+
+function dzDragOver(e,id){ e.preventDefault(); document.getElementById(id).classList.add('drag-over'); }
+function dzDragLeave(id){ document.getElementById(id).classList.remove('drag-over'); }
+function dzDrop(e,tipo){ e.preventDefault(); dzDragLeave('dz-'+tipo); const f=e.dataTransfer.files[0]; if(f) processFile(f,tipo); }
+function loadFile(e,tipo){ const f=e.target.files[0]; if(f) processFile(f,tipo); }
+
+function processFile(file, tipo) {
+  document.getElementById(`dz-${tipo}-name`).textContent = file.name;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+
+  reader.onload = ev => {
+    try {
+      const wb = XLSX.read(ev.target.result, {type:'binary', raw:false, cellDates:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+
+      if(tipo === 'vendas') {
+        // ── Vendas: ler como array de arrays (by index) para evitar duplicatas ──
+        const arr = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        if(arr.length < 2) { notify('Planilha vazia','error'); return; }
+        // arr[0] = cabeçalho, arr[1..] = dados
+        const dataRows = arr.slice(1).filter(r => r.some(v => v !== '' && v !== null));
+        rawFileData.vendas = dataRows;
+        rawFileData.vendas_header = arr[0]; // guardar cabeçalho para referência
+        // Para vendas NÃO mostrar mapeador — importar direto por índice fixo
+        document.getElementById('mapper-vendas').style.display = 'none';
+        document.getElementById('vendas-status').textContent =
+          `✔ ${dataRows.length} linhas lidas — clique em "Importar e Enviar ao Sheets"`;
+        // Mostrar preview rápido
+        showVendasPreview(dataRows, arr[0]);
+        notify(`✔ ${dataRows.length} linhas lidas. Confirme para importar.`,'ok');
+
+      } else {
+        // ── Clientes: raw:true para preservar números exatos (CNPJ/CPF) ──
+        const jsonData = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
+        if(!jsonData.length) { notify('Planilha vazia','error'); return; }
+        const rows = jsonData.map((r,idx) => {
+          const obj = {_idx: idx};
+          Object.keys(r).forEach(k => obj[k.toLowerCase().trim()] = String(r[k]||'').trim());
+          return obj;
+        }).filter(r => Object.keys(r).some(k=>!k.startsWith('_')&&r[k]));
+        rawFileData.clientes = rows;
+        buildMapper('clientes', rows[0]);
+        notify(`✔ ${rows.length} clientes lidos`,'ok');
+      }
+    } catch(e) { notify('Erro ao ler arquivo: ' + e.message,'error'); console.error(e); }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function showVendasPreview(dataRows, header) {
+  const amostra = dataRows[0] || [];
+  const div = document.getElementById('mapper-vendas-grid');
+  const isNovo = header.some(function(h){ return String(h||'').includes('Destinatário'); });
+
+  var IDX_NOVO = [
+    ['Emissão',4],['Venda',2],['NF',3],['Cliente',5],
+    ['Data Cadastro',6],['Segmento',7],['Tabela de Preço',8],
+    ['Cód. Produto',9],['Produto',10],['Quantidade',11],
+    ['UN',12],['Vlr. Unitário',13],['Total Item',14],['Vendedor',15],
+  ];
+  var IDX_ANTIGO = [
+    ['Emissão',5],['Venda',1],['NF',4],['Cliente',10],
+    ['Produto',23],['Quantidade',24],['Vlr. Unitário',25],
+    ['Total Item',30],['Vendedor',20],['Etapa',2],['Situação',8],
+  ];
+
+  var IDX = isNovo ? IDX_NOVO : IDX_ANTIGO;
+  var modelo = isNovo ? '📋 Relatório Personalizado' : '📄 Relatório Padrão';
+
+  function fmtVal(v) {
+    if(v === null || v === undefined || v === '') return null;
+    if(v instanceof Date) {
+      return String(v.getDate()).padStart(2,'0') + '/' +
+             String(v.getMonth()+1).padStart(2,'0') + '/' + v.getFullYear();
+    }
+    if(typeof v === 'object' && v.getFullYear) {
+      return String(v.getDate()).padStart(2,'0') + '/' +
+             String(v.getMonth()+1).padStart(2,'0') + '/' + v.getFullYear();
+    }
+    return String(v);
+  }
+
+  var linhas = IDX.map(function(item) {
+    var campo = item[0];
+    var col   = item[1];
+    var raw   = amostra[col];
+    var val   = fmtVal(raw);
+    var ok    = val !== null;
+    var display = ok ? val.slice(0, 22) : '(vazio)';
+    var icon  = ok ? '✅' : '❌';
+    var cor   = ok ? 'var(--text)' : 'var(--text3)';
+    return '<div style="display:flex;gap:.35rem;align-items:center;padding:2px 0">' +
+      '<span style="font-size:13px;flex-shrink:0">' + icon + '</span>' +
+      '<span style="color:var(--text2);flex-shrink:0">' + campo + ':</span>' +
+      '<span style="color:' + cor + ';font-weight:600;white-space:nowrap;overflow:hidden;' +
+        'text-overflow:ellipsis;max-width:140px" title="' + (ok?val:'') + '">' +
+        display + '</span>' +
+      '</div>';
+  }).join('');
+
+  div.innerHTML =
+    '<div style="grid-column:1/-1;background:var(--accent-dim);border-radius:8px;padding:.75rem;margin-bottom:.25rem">' +
+      '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:.4rem">' +
+        '✅ ' + dataRows.length + ' registros — ' + modelo +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.3rem;font-size:11px;margin-top:.4rem">' +
+        linhas +
+      '</div>' +
+    '</div>';
+
+  document.getElementById('mapper-vendas').style.display = 'block';
+}
+
+
+function importarVendas() {
+  const dataRows = rawFileData.vendas;
+  if(!dataRows || !dataRows.length) { notify('Nenhum arquivo carregado','error'); return; }
+
+  // ── Detectar modelo do relatório pelo cabeçalho ──────────────────────────
+  const header = rawFileData.vendas_header || [];
+  const isNovoModelo = header.some(h => String(h||'').includes('Destinatário'));
+
+  if(isNovoModelo) {
+    importarVendasNovoModelo(dataRows);
+  } else {
+    importarVendasModeloAntigo(dataRows);
+  }
+}
+
+// ===================== CARREGAR DO SHEETS =====================
+
+async function carregarTudoDoSheets() {
+  const url = STATE.config.scriptUrl;
+  if(!url) {
+    updateStatusImport();
+    hideLoading();
+    return;
+  }
+
+  showLoading('Conectando ao Sheets...');
+
+  try {
+    // ── Clientes ────────────────────────────────────────────────────────────
+    setLoadingMsg('Carregando clientes...', 10);
+    const dc = await apiFetch(url + '?action=getClientes');
+
+    if(dc.ok && dc.result.clientes && dc.result.clientes.length) {
+      STATE.clientes = dc.result.clientes.map(function(c) {
+        return {
+          id: c.id||'', nome: c.nome||'', fantasia: c.fantasia||'',
+          tipo: c.tipo||'', cnpj: c.cnpj||'', cpf: c.cpf||'',
+          ie: c.ie||'', codarea: c.codarea||'', fone: c.fone||'',
+          codarea_wpp: c.codarea_wpp||'', whatsapp: c.whatsapp||'',
+          emails: c.emails||'', cep: c.cep||'', endereco: c.endereco||'',
+          numero: c.numero||'', complemento: c.complemento||'',
+          bairro: c.bairro||'', cidade: c.cidade||'', uf: c.uf||'',
+          vendedor: c.vendedor||'', tabela: c.tabela||'',
+          arquivado: c.arquivado||'', segmento: c.segmento||'',
+          forma_pgto: c.forma_pgto||'', observacao: c.observacao||'',
+          email_cobranca: c.email_cobranca||'',
+          id_estrangeiro: c.id_estrangeiro||'',
+        };
+      }).filter(function(c){ return !!c.nome; });
+    }
+
+    // ── Vendas ───────────────────────────────────────────────────────────────
+    setLoadingMsg('Carregando vendas...', 40);
+    const dv = await apiFetch(url + '?action=getVendas');
+
+    if(dv.ok && dv.result.vendas && dv.result.vendas.length) {
+      STATE.vendas = dv.result.vendas.map(function(v) {
+        return {
+          _idx:             Number(v.idx||0),
+          _mes:             String(v.mes||''),
+          _ano:             String(v.ano||''),
+          _dia:             String(v.dia||''),
+          _primeiroDaVenda: true,
+          _isNovo:          String(v.novo||'') === 'Sim',
+          _datacad:         String(v.datacad||''),
+          nf:               String(v.nf||''),
+          nf_num:           String(v.nf_num||''),
+          venda:            String(v.venda||''),
+          venda_id:         String(v.venda_id||''),
+          cliente:          String(v.cliente||''),
+          produto:          String(v.produto||''),
+          prod_cod:         String(v.prod_cod||''),
+          un:               String(v.un||''),
+          qtd:              Number(v.qtd||0),
+          vlr_unit:         Number(v.vlr_unit||0),
+          valor:            Number(v.valor||0),
+          valor_item:       Number(v.valor_item||0),
+          desconto:         Number(v.desconto||0),
+          frete:            Number(v.frete||0),
+          vendedor:         String(v.vendedor||''),
+          situacao:         String(v.situacao||''),
+          etapa:            String(v.etapa||''),
+          cidade:           String(v.cidade||''),
+          uf:               String(v.uf||''),
+          segmento:         String(v.segmento||''),
+          tabela:           String(v.tabela||''),
+          motorista:        String(v.motorista||''),
+          entrega:          String(v.entrega||''),
+        };
+      }).filter(function(v){ return !!v.cliente; });
+    }
+
+    // ── Atualizar UI ──────────────────────────────────────────────────────────
+    setLoadingMsg('Atualizando dashboards...', 80);
+    await new Promise(function(r){ setTimeout(r, 50); });
+
+    _invalidateCache();
+    populateFilters();
+    applyFilters();
+    renderCarteira();
+    renderBaseAtiva();
+    updateStatusImport();
+
+    setLoadingMsg('Concluído!', 100);
+    await new Promise(function(r){ setTimeout(r, 300); });
+
+    var fat = STATE.vendas.reduce(function(s,v){ return s+v.valor; }, 0);
+    // document.getElementById('topbar-periodo').textContent =
+      STATE.vendas.length
+        ? STATE.vendas.length + ' itens · R$ ' + fat.toLocaleString('pt-BR',{minimumFractionDigits:2})
+        : STATE.clientes.length
+          ? STATE.clientes.length + ' clientes carregados'
+          : 'Sem dados no Sheets';
+
+    if(STATE.clientes.length || STATE.vendas.length) {
+      notify('✔ ' + STATE.clientes.length + ' clientes · ' + STATE.vendas.length + ' itens carregados', 'ok');
+    }
+
+  } catch(e) {
+    notify('Erro ao carregar do Sheets: ' + e.message, 'error');
+    console.error(e);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function carregarClientesDoSheets() {
+  const url = STATE.config.scriptUrl;
+  const st  = document.getElementById('sheets-clientes-status');
+  if(!url) {
+    if(st) st.innerHTML = '❌ Configure a URL do Apps Script em <b>Configurações</b> primeiro.';
+    notify('Configure a URL do Apps Script nas Configurações','warn');
+    return;
+  }
+  showLoading('Carregando clientes do Sheets...');
+  try {
+    const d = await apiFetch(url + '?action=getClientes');
+    if(!d.ok) { throw new Error(d.error); }
+    const raw = d.result.clientes || [];
+    if(!raw.length) {
+      if(st) st.textContent = '⚠️ Nenhum cliente encontrado. Sincronize primeiro.';
+      notify('Planilha vazia — sincronize os clientes primeiro','warn');
+      return;
+    }
+    STATE.clientes = raw.map(function(c) {
+      return {
+        id: c.id||'', nome: c.nome||'', fantasia: c.fantasia||'',
+        tipo: c.tipo||'', cnpj: c.cnpj||'', cpf: c.cpf||'',
+        ie: c.ie||'', fone: c.fone||'', whatsapp: c.whatsapp||'',
+        emails: c.emails||'', cep: c.cep||'', endereco: c.endereco||'',
+        numero: c.numero||'', complemento: c.complemento||'',
+        bairro: c.bairro||'', cidade: c.cidade||'', uf: c.uf||'',
+        vendedor: c.vendedor||'', tabela: c.tabela||'',
+        arquivado: c.arquivado||'', segmento: c.segmento||'',
+      };
+    }).filter(function(c){ return !!c.nome; });
+
+    populateFilters();
+    renderCarteira();
+    renderBaseAtiva();
+    updateStatusImport();
+
+    var ativos   = STATE.clientes.filter(function(c){ return String(c.arquivado||'').toLowerCase() !== 'sim'; }).length;
+    var inativos = STATE.clientes.length - ativos;
+    if(st) st.innerHTML = '✅ <b>' + STATE.clientes.length + '</b> clientes · <b>' + ativos + '</b> ativos · <b>' + inativos + '</b> inativos';
+    notify('✔ ' + STATE.clientes.length + ' clientes carregados do Sheets!','ok');
+    document.getElementById('clientes-status').textContent = '✔ ' + STATE.clientes.length + ' clientes (via Sheets)';
+
+  } catch(e) {
+    if(st) st.textContent = '❌ Falha: ' + e.message;
+    notify('Erro de conexão com o Sheets','error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ===================== NORMALIZAÇÃO TITLE CASE =====================
+const SIGLAS_BR = new Set([
+  'ME','EPP','SA','LTDA','EIRELI','EI','SS','CIA','SRL',
+  'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS',
+  'MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO',
+]);
+const PREP_BR = new Set([
+  'de','da','do','das','dos','e','a','o','as','os',
+  'em','na','no','nas','nos','para','por','com','sem',
+]);
+
+function titleCaseBR(str) {
+  if(!str) return str;
+  return String(str).trim().split(' ').map(function(palavra, idx) {
+    if(!palavra) return palavra;
+    if(palavra.includes('/')) return palavra.split('/').map(function(p,i){ return capPalavra(p, idx===0&&i===0?0:1); }).join('/');
+    if(palavra.includes('-')) return palavra.split('-').map(function(p){ return capPalavra(p,0); }).join('-');
+    return capPalavra(palavra, idx);
+  }).join(' ');
+}
+
+function capPalavra(p, pos) {
+  if(!p) return p;
+  var up = p.toUpperCase();
+  var lo = p.toLowerCase();
+  if(SIGLAS_BR.has(up)) return up;
+  if(pos > 0 && PREP_BR.has(lo)) return lo;
+  return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+}
+
+// ── NOVO MODELO: relatorio_personalizado.xlsx ─────────────────────────────
+// Colunas por índice fixo:
+// [0]venda_id [1]Licenciado [2]Venda [3]NF [4]Emissão [5]Destinatário:Nome
+// [6]DataCadastroCliente [7]Segmento [8]TabelaPreço [9]Produto:Código
+// [10]Produto:Nome [11]Quantidade [12]UN [13]Vlr.Unitário [14]Produto:Total
+// [15]Vendedor
+
+function importarVendasNovoModelo(dataRows) {
+  function pVal(v) {
+    if(v === null || v === undefined || v === '') return 0;
+    if(typeof v === 'number') return v;
+    return parseFloat(String(v).replace(/\./g,'').replace(',','.')) || 0;
+  }
+
+  function pData(v) {
+    if(!v) return {mes:'',ano:'',dia:''};
+    // SheetJS com cellDates:true retorna objeto Date
+    if(v instanceof Date || (typeof v === 'object' && v.getFullYear)) {
+      return {
+        dia: String(v.getDate()).padStart(2,'0'),
+        mes: String(v.getMonth()+1).padStart(2,'0'),
+        ano: String(v.getFullYear()),
+      };
+    }
+    const s = String(v).trim();
+    const m1 = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m1) return {dia:m1[1],mes:m1[2],ano:m1[3]};
+    if(m2) return {dia:m2[3],mes:m2[2],ano:m2[1]};
+    // Tentar como Date string
+    const d = new Date(v);
+    if(!isNaN(d.getTime())) return {
+      dia: String(d.getDate()).padStart(2,'0'),
+      mes: String(d.getMonth()+1).padStart(2,'0'),
+      ano: String(d.getFullYear()),
+    };
+    return {mes:'',ano:'',dia:''};
+  }
+
+  function pStr(v) { return String(v||'').trim(); }
+
+  const vendas = [];
+  const pedidosVistos = new Set();
+
+  // Data de hoje para detectar clientes novos pela data de cadastro
+  const hoje = new Date();
+  const anoAtual = String(hoje.getFullYear());
+
+  dataRows.forEach((r, i) => {
+    const {mes, ano, dia} = pData(r[4]); // Emissão
+    if(!mes) return;
+
+    const venda      = pStr(r[2]).replace(/\.0$/,'');
+    const nf         = pStr(r[3]).replace(/\.0$/,'');
+    const cliente    = titleCaseBR(pStr(r[5]));
+    const datacad    = pData(r[6]); // Data Cadastro Cliente
+    const segmento   = titleCaseBR(pStr(r[7]));
+    const tabela     = titleCaseBR(pStr(r[8]));
+    const prod_cod   = pStr(r[9]);
+    const produto    = titleCaseBR(pStr(r[10]));
+    const qtd        = pVal(r[11]);
+    const un         = pStr(r[12]);
+    const vlr_unit   = pVal(r[13]);
+    const total_item = pVal(r[14]);
+    const vendedor   = titleCaseBR(
+      pStr(r[15])
+        .replace(/\s*-\s*(ativa|inativo|ativo|interno|externa|externo|suporte)\s*$/i,'')
+        .replace(/\s+/g,' ').trim()
+    );
+
+    if(!cliente) return;
+
+    // Cliente novo = cadastrado no ano atual OU no período das vendas
+    const isNovo = datacad.ano === anoAtual || datacad.ano === ano;
+
+    pedidosVistos.add(venda);
+
+    vendas.push({
+      _idx:             i,
+      _mes:             mes,
+      _ano:             ano,
+      _dia:             dia,
+      _primeiroDaVenda: true,
+      _isNovo:          isNovo,
+      _datacad:         datacad.ano ? `${datacad.dia}/${datacad.mes}/${datacad.ano}` : '',
+      venda_id:         pStr(r[0]).replace(/\.0$/,''),
+      nf,
+      nf_num:           nf,
+      venda,
+      cliente,
+      produto,
+      prod_cod,
+      un,
+      qtd,
+      vlr_unit,
+      valor:            total_item,
+      valor_item:       total_item,
+      desconto:         0,
+      frete:            0,
+      vendedor,
+      situacao:         '',
+      etapa:            '',
+      cidade:           '',
+      uf:               '',
+      segmento,
+      tabela,
+      motorista:        '',
+      entrega:          '',
+    });
+  });
+
+  _finalizarImportacaoVendas(vendas);
+}
+
+// ── MODELO ANTIGO: relatório de vendas padrão ─────────────────────────────
+function importarVendasModeloAntigo(dataRows) {
+  const C = {
+    id:0, venda:1, etapa:2, quadro:3, numero:4, emissao:5,
+    situacao:8, dest_id:9, cliente:10, cidade:11, uf:12, natureza:13,
+    frete_nf:15, desconto_nf:16, total_nf:18, observacao:19, vendedor:20,
+    produto:23, qtd:24, vlr_unit:25, desconto_item:26, frete_item:28,
+    total_item:30, entrega:44, motorista:45,
+  };
+
+  function pVal(v) {
+    if(v===null||v===undefined||v==='') return 0;
+    if(typeof v === 'number') return v;
+    return parseFloat(String(v).replace(/\./g,'').replace(',','.')) || 0;
+  }
+
+  function pData(v) {
+    if(!v) return {mes:'',ano:'',dia:''};
+    const s = String(v).trim();
+    const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    const m2 = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m)  return {dia:m[1], mes:m[2], ano:m[3]};
+    if(m2) return {dia:m2[3],mes:m2[2],ano:m2[1]};
+    const d = new Date(v);
+    if(!isNaN(d.getTime())) return {
+      dia: String(d.getDate()).padStart(2,'0'),
+      mes: String(d.getMonth()+1).padStart(2,'0'),
+      ano: String(d.getFullYear()),
+    };
+    return {mes:'',ano:'',dia:''};
+  }
+
+  const vendas = [];
+  const pedidosVistos = new Set();
+
+  dataRows.forEach((r, i) => {
+    const {mes,ano,dia} = pData(r[C.emissao]);
+    if(!mes) return;
+
+    const nf       = String(r[C.numero]||'').replace(/\.0$/,'');
+    const cliente  = titleCaseBR(String(r[C.cliente]||'').trim());
+    const produto  = titleCaseBR(String(r[C.produto]||'').trim());
+    const vendedor = titleCaseBR(
+      String(r[C.vendedor]||'')
+        .replace(/\s*-\s*(ativa|inativo|ativo|interno|externa|externo|suporte)\s*$/i,'')
+        .replace(/\s+/g,' ').trim()
+    );
+
+    if(!cliente) return;
+    pedidosVistos.add(String(r[C.venda]||''));
+
+    vendas.push({
+      _idx: i, _mes: mes, _ano: ano, _dia: dia,
+      _primeiroDaVenda: true, _isNovo: false, _datacad: '',
+      nf, nf_num: nf,
+      venda: String(r[C.venda]||'').replace(/\.0$/,''),
+      cliente, produto, prod_cod: '',
+      qtd:        pVal(r[C.qtd]),
+      vlr_unit:   pVal(r[C.vlr_unit]),
+      valor:      pVal(r[C.total_item]),
+      valor_item: pVal(r[C.total_item]),
+      desconto:   pVal(r[C.desconto_nf]),
+      frete:      pVal(r[C.frete_nf]),
+      vendedor,
+      situacao:   String(r[C.situacao]||''),
+      etapa:      String(r[C.etapa]||''),
+      cidade:     String(r[C.cidade]||''),
+      uf:         String(r[C.uf]||''),
+      segmento:   String(r[C.natureza]||''),
+      tabela:     '',
+      motorista:  String(r[C.motorista]||''),
+      entrega:    String(r[C.entrega]||''),
+    });
+  });
+
+  _finalizarImportacaoVendas(vendas);
+}
+
+// ── Finalização comum aos dois modelos ───────────────────────────────────
+function _finalizarImportacaoVendas(vendas) {
+  // Detectar clientes novos pelo histórico (fallback quando _isNovo não disponível)
+  const clientesAntigos = new Set([...STATE.historico].filter(k=>!k.startsWith('NOVO::')));
+  vendas.forEach(v => {
+    if(v._isNovo || !clientesAntigos.has(v.cliente)) {
+      STATE.historico.add('NOVO::'+v.cliente);
+    }
+    STATE.historico.add(v.cliente);
+  });
+
+  STATE.vendas = vendas;
+  _invalidateCache();
+  populateFilters();
+  applyFilters();
+  renderConfig();
+  updateStatusImport();
+  updateHistoricoInfo();
+
+  const nfsUnicas = new Set(vendas.map(v=>v.venda||v.nf)).size;
+  const fatTotal  = vendas.reduce((s,v)=>s+v.valor,0);
+  const novos     = [...new Set(vendas.filter(v=>v._isNovo).map(v=>v.cliente))].length;
+
+  notify(
+    `✔ ${vendas.length} itens · ${nfsUnicas} vendas · ` +
+    `R$ ${fatTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})} · ` +
+    `${novos} clientes novos`,
+    'ok'
+  );
+  document.getElementById('vendas-status').textContent =
+    `✔ ${vendas.length} itens · ${nfsUnicas} vendas · ${novos} clientes novos`;
+}
+
+
+function importarClientes() {
+  const rows = rawFileData.clientes;
+  if(!rows) { notify('Nenhum arquivo carregado','error'); return; }
+
+  // Função de leitura tolerante: testa chave exata, sem acento, e sem acento+lowercase
+  function norm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+  function get(row, ...tentativas) {
+    // 1. Tenta cada tentativa direta
+    for(const t of tentativas){
+      if(row[t] !== undefined && row[t] !== '') return String(row[t]);
+    }
+    // 2. Tenta normalizado contra todas as chaves da row
+    const normKeys = Object.keys(row).map(k=>({ orig:k, norm:norm(k) }));
+    for(const t of tentativas){
+      const nt = norm(t);
+      const found = normKeys.find(k=>k.norm===nt);
+      if(found && row[found.orig] !== undefined && row[found.orig] !== '') return String(row[found.orig]);
+    }
+    return '';
+  }
+
+  // Converter campo numérico (CNPJ/CPF/IE) que o Excel guarda como float
+  // raw:true garante número exato, mas ainda precisa remover .0 e formatar
+  function fixDoc(v, tamanho) {
+    if(v === null || v === undefined || v === '') return '';
+    // Se é número nativo (raw:true do SheetJS) — converter direto
+    if(typeof v === 'number') {
+      // Usar BigInt para evitar perda de precisão em números grandes
+      try {
+        const intStr = BigInt(Math.round(v)).toString();
+        return tamanho ? intStr.padStart(tamanho, '0') : intStr;
+      } catch(e) {
+        const intStr = Math.round(v).toString();
+        return tamanho ? intStr.padStart(tamanho, '0') : intStr;
+      }
+    }
+    const s = String(v).trim();
+    // Remover formatação (pontos, traços, barras): 24.779.647/0001-21 → 24779647000121
+    const apenasNums = s.replace(/[^0-9]/g, '');
+    if(apenasNums) return tamanho ? apenasNums.padStart(tamanho, '0') : apenasNums;
+    // Notação científica como string
+    const num = parseFloat(s);
+    if(!isNaN(num)) {
+      try {
+        const intStr = BigInt(Math.round(num)).toString();
+        return tamanho ? intStr.padStart(tamanho, '0') : intStr;
+      } catch(e) {}
+    }
+    return s;
+  }
+
+  const clientes = rows.map(r => ({
+    id:             get(r, 'id'),
+    nome:           titleCaseBR(get(r, 'nome')),
+    fantasia:       titleCaseBR(get(r, 'nome fantasia', 'fantasia')),
+    tipo:           get(r, 'tipo'),
+    cnpj:           fixDoc(get(r, 'cnpj'), 14),
+    cpf:            fixDoc(get(r, 'cpf'),  11),
+    ie:             fixDoc(get(r, 'ie'),    0),
+    codarea:        get(r, 'codigo de área', 'codigo de area', 'cód. área', 'codarea'),
+    fone:           get(r, 'fone', 'telefone', 'tel'),
+    codarea_wpp:    get(r, 'codigo de área whatsapp', 'codigo de area whatsapp'),
+    whatsapp:       get(r, 'whatsapp', 'wpp'),
+    emails:         get(r, 'emails', 'email', 'e-mail'),
+    cep:            get(r, 'cep'),
+    endereco:       titleCaseBR(get(r, 'endereço', 'endereco', 'endereço')),
+    numero:         get(r, 'número', 'numero'),
+    complemento:    titleCaseBR(get(r, 'complemento')),
+    bairro:         titleCaseBR(get(r, 'bairro')),
+    cidade:         titleCaseBR(get(r, 'cidade', 'municipio', 'município')),
+    uf:             get(r, 'uf', 'estado'),
+    ibge:           get(r, 'ibge'),
+    rg:             get(r, 'rg'),
+    ssp:            get(r, 'ssp'),
+    indicador_ie:   get(r, 'indicador da ie', 'indicador ie'),
+    observacao:     get(r, 'observação', 'observacao'),
+    email_cobranca: get(r, 'email para avisos de cobrança', 'email para avisos de cobranca', 'email cobrança'),
+    vendedor:       get(r, 'vendedor'),
+    id_estrangeiro: get(r, 'id estrangeiro'),
+    tabela:         get(r, 'tabela de preços', 'tabela de precos', 'tabela'),
+    arquivado:      get(r, 'arquivado'),
+    forma_pgto:     get(r, 'forma de pagamento'),
+    limite_credito: get(r, 'limite de crédito', 'limite de credito'),
+    valor_limite:   get(r, 'valor do limite'),
+    transp_id:      get(r, 'transportador id'),
+    transportador:  get(r, 'transportador'),
+    vend_equiv_id:  get(r, 'vendedor equivalente id'),
+    vend_equiv:     get(r, 'vendedor equivalente'),
+    atua_cliente:   get(r, 'atua como cliente'),
+    atua_fornec:    get(r, 'atua como fornecedor'),
+    atua_transp:    get(r, 'atua como transportador'),
+    atua_vendedor:  get(r, 'atua como vendedor'),
+    segmento:       get(r, 'Segmento', 'segmento'),
+  })).filter(c => c.nome);
+
+  STATE.clientes = clientes;
+  STATE.mapClientes = {};
+  _invalidateCache();
+  saveToStorage();
+  populateFilters();
+  renderCarteira();
+  updateStatusImport();
+  notify(`✔ ${clientes.length} clientes importados!`,'ok');
+  document.getElementById('clientes-status').textContent = `✔ ${clientes.length} clientes`;
+}
+
+function salvarMapeamento(tipo) {
+  const campos = tipo==='vendas' ? CAMPOS_VENDAS : CAMPOS_CLIENTES;
+  const map = {};
+  campos.forEach(c=>{ const el=document.getElementById(`map-${tipo}-${c.id}`); if(el) map[c.id]=el.value; });
+  if(tipo==='vendas') STATE.mapVendas=map; else STATE.mapClientes=map;
+  saveToStorage();
+  notify('Mapeamento salvo!','ok');
+}
+
+function updateStatusImport() {
+  const sv = document.getElementById('status-vendas-load');
+  const sc = document.getElementById('status-clientes-load');
+  const sh = document.getElementById('status-historico-load');
+  if(sv) sv.textContent = STATE.vendas.length   ? `✅ ${STATE.vendas.length} registros (sessão)` : '❌ Não carregado';
+  if(sc) sc.textContent = STATE.clientes.length ? `✅ ${STATE.clientes.length} clientes (sessão)` : '❌ Não carregado';
+  if(sh) sh.textContent = '☁️ Dados no Sheets';
+}
+
+function limparTodosDados() {
+  if(!confirm('Limpar os dados da sessão atual? Os dados no Sheets não serão afetados.')) return;
+  STATE.vendas   = [];
+  STATE.clientes = [];
+  STATE.historico = new Set();
+  filteredVendas  = [];
+  // Remover qualquer resquício de dados antigos do localStorage
+  ['ea_vendas','ea_clientes','ea_historico'].forEach(k => localStorage.removeItem(k));
+  updateStatusImport();
+  renderDashboard();
+  notify('Sessão limpa — importe novos dados ou carregue do Sheets','warn');
+}
+
+// ===================== PRINT =====================
+function printFichaComissao() {
+  const vend = document.getElementById('fv-vendedor')?.value||'';
+  if(!vend) { notify('Selecione um vendedor','warn'); return; }
+
+  const mes = document.getElementById('fv-mes')?.value||'';
+  const ano = document.getElementById('fv-ano')?.value||'';
+  const pctC = STATE.config.comissoes[vend]||5;
+  const bonusPct = STATE.config.bonusPct||2;
+
+  let data = STATE.vendas.filter(v=>v.vendedor===vend);
+  if(mes) data=data.filter(v=>v._mes===mes);
+  if(ano) data=data.filter(v=>v._ano===ano);
+
+  const por={};
+  data.forEach(v=>{
+    const k=v.cliente;
+    if(!por[k]) por[k]={cliente:k,segmento:v.segmento||'',nfs:new Set(),valor:0};
+    por[k].nfs.add(v.nf||v._idx);
+    por[k].valor+=v.valor;
+  });
+  const rows=Object.values(por).sort((a,b)=>b.valor-a.valor);
+  const totalFat=rows.reduce((s,r)=>s+r.valor,0);
+  const totalComissao=totalFat*pctC/100;
+
+  // Bônus
+  const novos=rows.filter(r=>STATE.historico.has('NOVO::'+r.cliente));
+  const totalBonus=novos.reduce((s,r)=>s+r.valor,0)*bonusPct/100;
+
+  const periodo = mes&&ano?`${['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+mes]}/${ano}`:ano?ano:'Todo o período';
+
+  document.getElementById('p-vendedor-nome').textContent = vend;
+  document.getElementById('p-periodo').textContent = periodo;
+  document.getElementById('p-conteudo').innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1rem">
+      <thead><tr style="background:#1A5C38;color:#fff">
+        <th style="padding:7px;text-align:left">Cliente</th>
+        <th style="padding:7px;text-align:left">Segmento</th>
+        <th style="padding:7px;text-align:right">Qtd NFs</th>
+        <th style="padding:7px;text-align:right">Valor Total</th>
+        <th style="padding:7px;text-align:right">Comissão (${pctC}%)</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr style="border-bottom:1px solid #eee">
+          <td style="padding:6px">${r.cliente}${STATE.historico.has('NOVO::'+r.cliente)?' 🆕':''}</td>
+          <td style="padding:6px">${r.segmento}</td>
+          <td style="padding:6px;text-align:right">${r.nfs.size}</td>
+          <td style="padding:6px;text-align:right">${fmtR(r.valor)}</td>
+          <td style="padding:6px;text-align:right">${fmtR(r.valor*pctC/100)}</td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot>
+        <tr style="background:#f1f0ed;font-weight:700">
+          <td colspan="3" style="padding:8px">TOTAL</td>
+          <td style="padding:8px;text-align:right">${fmtR(totalFat)}</td>
+          <td style="padding:8px;text-align:right">${fmtR(totalComissao)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    ${novos.length?`
+    <div style="background:#f3e5f5;border-radius:8px;padding:12px;margin-bottom:1rem">
+      <b>⭐ Bônus de Cadastro (${bonusPct}%)</b><br>
+      ${novos.length} cliente(s) novo(s) — Faturamento: ${fmtR(novos.reduce((s,r)=>s+r.valor,0))} — Bônus: <b>${fmtR(totalBonus)}</b>
+    </div>`:''}
+    <div style="background:#e8f5e9;border-radius:8px;padding:12px;font-size:14px">
+      <table style="width:100%">
+        <tr><td><b>Comissão sobre vendas:</b></td><td style="text-align:right">${fmtR(totalComissao)}</td></tr>
+        ${novos.length?`<tr><td><b>Bônus de cadastro:</b></td><td style="text-align:right">${fmtR(totalBonus)}</td></tr>`:''}
+        <tr style="font-size:16px;color:#1A5C38"><td><b>TOTAL A RECEBER:</b></td><td style="text-align:right"><b>${fmtR(totalComissao+totalBonus)}</b></td></tr>
+      </table>
+    </div>
+    <div style="margin-top:2rem;display:flex;gap:2rem">
+      <div style="flex:1;border-top:1px solid #ccc;padding-top:.5rem;text-align:center;font-size:12px">Vendedor: ${vend}</div>
+      <div style="flex:1;border-top:1px solid #ccc;padding-top:.5rem;text-align:center;font-size:12px">Responsável Financeiro</div>
+    </div>`;
+  window.print();
+}
+
+// ===================== EXPORT EXCEL =====================
+function exportTable(tableId, filename) {
+  const table = document.getElementById(tableId);
+  if(!table) { notify('Tabela não encontrada','error'); return; }
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.table_to_sheet(table);
+  XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+  XLSX.writeFile(wb, `${filename}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notify('Excel exportado!','ok');
+}
+
+function exportCarteira() {
+  if(!STATE.clientes.length && !STATE.vendas.length) { notify('Nenhum dado para exportar','warn'); return; }
+  // Recalcular vendasExp com o filtro atual da carteira
+  const fExpMes = document.getElementById('fcar-mes')?.value || '';
+  const fExpAno = document.getElementById('fcar-ano')?.value || '';
+  const vendasExp = STATE.vendas.filter(v => {
+    if(fExpMes && v._mes !== fExpMes) return false;
+    if(fExpAno && v._ano !== fExpAno) return false;
+    return true;
+  });
+  const mesesDisp = [...new Set(vendasExp.map(v=>`${v._ano}-${v._mes}`))].sort().slice(-6);
+  const MESES_NOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const fatPorClienteMes={};
+  vendasExp.forEach(v=>{ const key=`${v._ano}-${v._mes}`; if(!fatPorClienteMes[v.cliente])fatPorClienteMes[v.cliente]={}; fatPorClienteMes[v.cliente][key]=(fatPorClienteMes[v.cliente][key]||0)+v.valor; });
+  const ANO_ATUAL=mesesDisp.length?mesesDisp[mesesDisp.length-1].split('-')[0]:'';
+  const ANO_ANT=ANO_ATUAL?String(+ANO_ATUAL-1):'';
+  const clientes=STATE.clientes.length?STATE.clientes:[...new Set(STATE.vendas.map(v=>v.cliente))].map(n=>({nome:n,vendedor:STATE.vendas.find(v=>v.cliente===n)?.vendedor||'',segmento:STATE.vendas.find(v=>v.cliente===n)?.segmento||'',uf:''}));
+  const headers=['Cliente','Vendedor','Segmento','UF',...mesesDisp.map(m=>{const[a,mes]=m.split('-');return`${MESES_NOME[+mes]}/${a.slice(2)}`}),'YTD Atual','YTD Ant','Lacuna','% Cresc','Status'];
+  const dataRows=clientes.map(c=>{
+    const nome=c.nome||'';
+    const meses=mesesDisp.map(m=>(fatPorClienteMes[nome]?.[m])||0);
+    const ytdAtual=Object.entries(fatPorClienteMes[nome]||{}).filter(([k])=>k.startsWith(ANO_ATUAL)).reduce((s,[,v])=>s+v,0);
+    const ytdAnt=Object.entries(fatPorClienteMes[nome]||{}).filter(([k])=>k.startsWith(ANO_ANT)).reduce((s,[,v])=>s+v,0);
+    const lacuna=ytdAtual-ytdAnt;
+    const crescPct=ytdAnt>0?(lacuna/ytdAnt*100).toFixed(1)+'%':'—';
+    const mesAtual=meses[meses.length-1]||0;const mesAnt=meses[meses.length-2]||0;
+    let status='INATIVO';if(mesAtual>0)status='ATIVO';else if(mesAnt>0)status='RISCO INATIVIDADE';
+    if(STATE.historico.has('NOVO::'+nome))status='CLIENTE NOVO';
+    return[nome,c.vendedor||'',c.segmento||'',c.uf||'',...meses,ytdAtual,ytdAnt,lacuna,crescPct,status];
+  });
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([headers,...dataRows]);
+  XLSX.utils.book_append_sheet(wb,ws,'Carteira');
+  XLSX.writeFile(wb,`Carteira_EA_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notify('Carteira exportada!','ok');
+}
+
+// ===================== CHARTS =====================
+const COLORS=['#1A5C38','#2a7a4e','#3d9e69','#6abf8a','#97d4ae','#c3e9d1','#f4a623','#e86d3d','#c0392b','#8e44ad'];
+function renderChart(id,type,labels,values,opts={}) {
+  if(chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+  const ctx=document.getElementById(id);
+  if(!ctx||!labels.length) return;
+  const horizontal=opts.horizontal;
+  chartInstances[id]=new Chart(ctx,{
+    type:type==='bar'&&horizontal?'bar':type,
+    data:{
+      labels,
+      datasets:[{
+        label:opts.label||'',
+        data:values,
+        backgroundColor:type==='doughnut'?COLORS:COLORS[0],
+        borderColor:type==='doughnut'?'#fff':'transparent',
+        borderWidth:type==='doughnut'?2:0,
+        borderRadius:type==='bar'?4:0,
+      }]
+    },
+    options:{
+      indexAxis:horizontal?'y':'x',
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:type==='doughnut',position:'right',labels:{font:{size:11},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>'R$ '+fmtN(ctx.raw)}}
+      },
+      scales:type==='doughnut'?{}:{
+        x:{grid:{display:!horizontal},ticks:{font:{size:11}}},
+        y:{grid:{display:horizontal},ticks:{font:{size:11},callback:v=>horizontal?v:fmtAbrev(v)}}
+      }
+    }
+  });
+}
+
+// ===================== BASE ATIVA =====================
+
+// Definição das colunas da tabela
+const BA_COLS = [
+  { key:'_num',         label:'#',              width:'40px',  align:'center', sortable:false },
+  { key:'segmento',     label:'Perfil/Seg.',    width:'110px', align:'left',   sortable:true  },
+  { key:'tipo',         label:'Tipo',           width:'80px',  align:'center', sortable:true  },
+  { key:'_doc',         label:'CNPJ / CPF',     width:'140px', align:'left',   sortable:true  },
+  { key:'nome',         label:'Razão Social',   width:'220px', align:'left',   sortable:true  },
+  { key:'fantasia',     label:'Fantasia',       width:'150px', align:'left',   sortable:true  },
+  { key:'_endereco',    label:'Endereço',       width:'180px', align:'left',   sortable:false },
+  { key:'bairro',       label:'Bairro',         width:'120px', align:'left',   sortable:true  },
+  { key:'cidade',       label:'Município',      width:'130px', align:'left',   sortable:true  },
+  { key:'uf',           label:'UF',             width:'50px',  align:'center', sortable:true  },
+  { key:'vendedor',     label:'Vendedor',       width:'130px', align:'left',   sortable:true  },
+  { key:'tabela',       label:'Tabela',         width:'110px', align:'left',   sortable:true  },
+  { key:'_status',      label:'Status',         width:'90px',  align:'center', sortable:true  },
+];
+
+let baSort = { key: 'nome', dir: 1 }; // ordenação atual
+
+function renderBaseAtiva() {
+  if (!STATE.clientes.length) {
+    document.getElementById('baseativa-empty').style.display = 'block';
+    document.getElementById('tbl-baseativa').style.display = 'none';
+    ['ba-total','ba-ativos','ba-inativos','ba-municipios'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.textContent = '0';
+    });
+    return;
+  }
+  document.getElementById('baseativa-empty').style.display = 'none';
+  document.getElementById('tbl-baseativa').style.display = '';
+
+  populateBaseAtivaFilters();
+
+  // KPIs globais
+  const isArq = c => String(c.arquivado||'').toLowerCase() === 'sim';
+  document.getElementById('ba-total').textContent     = STATE.clientes.length;
+  document.getElementById('ba-ativos').textContent    = STATE.clientes.filter(c => !isArq(c)).length;
+  document.getElementById('ba-inativos').textContent  = STATE.clientes.filter(c =>  isArq(c)).length;
+  document.getElementById('ba-municipios').textContent = new Set(STATE.clientes.map(c=>c.cidade).filter(Boolean)).size;
+
+  // Filtros
+  const fstatus = document.getElementById('fba-status')?.value || '';
+  const fvend   = document.getElementById('fba-vendedor')?.value || '';
+  const fseg    = document.getElementById('fba-seg')?.value || '';
+  const fuf     = document.getElementById('fba-uf')?.value || '';
+  const ftipo   = document.getElementById('fba-tipo')?.value || '';
+  const search  = (document.getElementById('search-baseativa')?.value || '').toLowerCase();
+
+  let rows = STATE.clientes.map(c => ({
+    ...c,
+    _doc:     c.cnpj || c.cpf || '',
+    _endereco: [c.endereco, c.numero].filter(Boolean).join(', '),
+    _status:  isArq(c) ? 'Inativo' : 'Ativo',
+  }));
+
+  if (fstatus === 'ativo')   rows = rows.filter(c => c._status === 'Ativo');
+  if (fstatus === 'inativo') rows = rows.filter(c => c._status === 'Inativo');
+  if (fvend)  rows = rows.filter(c => c.vendedor === fvend);
+  if (fseg)   rows = rows.filter(c => c.segmento === fseg);
+  if (fuf)    rows = rows.filter(c => c.uf === fuf);
+  if (ftipo)  rows = rows.filter(c => c.tipo === ftipo);
+  if (search) rows = rows.filter(c =>
+    String(c.nome||'').toLowerCase().includes(search)     ||
+    String(c.fantasia||'').toLowerCase().includes(search) ||
+    String(c._doc||'').includes(search)                   ||
+    String(c.cidade||'').toLowerCase().includes(search)   ||
+    String(c.bairro||'').toLowerCase().includes(search)
+  );
+
+  // Ordenação
+  if (baSort.key && baSort.key !== '_num') {
+    rows.sort((a, b) => {
+      const va = String(a[baSort.key]||'').toLowerCase();
+      const vb = String(b[baSort.key]||'').toLowerCase();
+      return va < vb ? -baSort.dir : va > vb ? baSort.dir : 0;
+    });
+  }
+
+  document.getElementById('ba-count').textContent = `${rows.length} registro(s) exibido(s)`;
+
+  // Renderizar cabeçalho com setas
+  const thead = document.getElementById('thead-ba');
+  thead.innerHTML = BA_COLS.map(col => {
+    if (!col.sortable) return `<th style="
+      background:var(--accent);color:#fff;padding:8px 10px;
+      font-size:11px;font-weight:600;letter-spacing:.3px;
+      white-space:nowrap;text-align:${col.align};
+      min-width:${col.width};width:${col.width}
+    ">${col.label}</th>`;
+
+    const isActive = baSort.key === col.key;
+    const arrow = isActive ? (baSort.dir === 1 ? ' ▲' : ' ▼') : ' ⇅';
+    return `<th onclick="sortBA('${col.key}')" style="
+      background:${isActive ? '#0f3d24' : 'var(--accent)'};
+      color:#fff;padding:8px 10px;font-size:11px;font-weight:600;
+      letter-spacing:.3px;white-space:nowrap;text-align:${col.align};
+      min-width:${col.width};width:${col.width};
+      cursor:pointer;user-select:none;transition:background .15s;
+    " title="Clique para ordenar por ${col.label}">
+      ${col.label}<span style="opacity:${isActive?1:.45};font-size:10px">${arrow}</span>
+    </th>`;
+  }).join('');
+
+  // Renderizar linhas
+  const tbody = document.getElementById('tbody-baseativa');
+
+  tbody.innerHTML = rows.map((c, i) => {
+    const statusBadge = c._status === 'Ativo'
+      ? '<span class="badge b-ok">✅ Ativo</span>'
+      : '<span class="badge b-danger">❌ Inativo</span>';
+    const tipoBadge = c.tipo
+      ? `<span class="badge b-gray" style="font-size:10px">${c.tipo.slice(0,3)}</span>`
+      : '—';
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="text-align:center;color:var(--text3);font-size:11px;padding:7px 6px">${i+1}</td>
+      <td style="padding:7px 10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.segmento||''}">${c.segmento||'—'}</td>
+      <td style="padding:7px 6px;text-align:center">${tipoBadge}</td>
+      <td style="padding:7px 10px;font-family:monospace;font-size:11px">${c._doc||'—'}</td>
+      <td style="padding:7px 10px;font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.nome||''}">${c.nome||'—'}</td>
+      <td style="padding:7px 10px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.fantasia||''}">${c.fantasia||'—'}</td>
+      <td style="padding:7px 10px;color:var(--text2);font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c._endereco||''}">${c._endereco||'—'}</td>
+      <td style="padding:7px 10px;font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.bairro||''}">${c.bairro||'—'}</td>
+      <td style="padding:7px 10px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.cidade||''}">${c.cidade||'—'}</td>
+      <td style="padding:7px 6px;text-align:center"><span class="badge b-info" style="font-size:10px">${c.uf||'—'}</span></td>
+      <td style="padding:7px 10px;font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.vendedor||''}">${c.vendedor||'—'}</td>
+      <td style="padding:7px 10px;font-size:11px;color:var(--text2);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.tabela||''}">${c.tabela||'—'}</td>
+      <td style="padding:7px 8px;text-align:center">${statusBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function sortBA(key) {
+  if (baSort.key === key) baSort.dir *= -1;
+  else { baSort.key = key; baSort.dir = 1; }
+  renderBaseAtiva();
+}
+
+function limparFiltrosBA() {
+  ['fba-status','fba-vendedor','fba-seg','fba-uf','fba-tipo'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  const s = document.getElementById('search-baseativa'); if(s) s.value = '';
+  baSort = { key: 'nome', dir: 1 };
+  renderBaseAtiva();
+}
+
+function populateBaseAtivaFilters() {
+  function fill(id, values) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    el.innerHTML = id.includes('uf') ? '<option value="">Todas</option>' : '<option value="">Todos</option>';
+    [...new Set(values.filter(Boolean))].sort().forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v; el.appendChild(o);
+    });
+    if ([...el.options].some(o => o.value === cur)) el.value = cur;
+  }
+  fill('fba-vendedor', STATE.clientes.map(c => c.vendedor));
+  fill('fba-seg',      STATE.clientes.map(c => c.segmento));
+  fill('fba-uf',       STATE.clientes.map(c => c.uf));
+  fill('fba-tipo',     STATE.clientes.map(c => c.tipo));
+}
+
+// ===================== HELPERS =====================// ===================== HELPERS =====================
+function parseData(str) {
+  if(!str) return {mes:'',ano:'',dia:''};
+  // Suporta dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy
+  let d,m,a;
+  const p1=str.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  const p2=str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const p3=str.match(/^(\d{2})-(\d{2})-(\d{4})/);
+  if(p1){d=p1[1];m=p1[2];a=p1[3];}
+  else if(p2){a=p2[1];m=p2[2];d=p2[3];}
+  else if(p3){d=p3[1];m=p3[2];a=p3[3];}
+  else return {mes:'',ano:'',dia:''};
+  return {mes:m,ano:a,dia:d};
+}
+
+function groupSum(arr,keyFn,valFn){
+  const r={};
+  arr.forEach(item=>{ const k=keyFn(item)||'(vazio)'; r[k]=(r[k]||0)+valFn(item); });
+  return r;
+}
+
+function fmtR(v){ return 'R$ '+fmtN(v); }
+function fmtN(v){
+  if(v===undefined||v===null||isNaN(v)) return '0';
+  return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtAbrev(v){
+  if(v>=1e6) return 'R$'+(v/1e6).toFixed(1)+'Mi';
+  if(v>=1e3) return 'R$'+(v/1e3).toFixed(0)+'k';
+  return 'R$'+v.toFixed(0);
+}
+function pct(v,total){ return total>0?((v/total)*100).toFixed(1)+'%':'0%'; }
+function truncate(s,n){ return s&&s.length>n?s.slice(0,n)+'…':s; }
+</script>
+</body>
+</html>
