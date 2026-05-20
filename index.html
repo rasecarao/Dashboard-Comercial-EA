@@ -100,6 +100,30 @@ tbody td.mono{font-family:monospace;font-size:12px}
 .b-novo{background:#f3e5f5;color:#7b1fa2}
 .b-gray{background:var(--surface2);color:var(--text2)}
 
+/* Carteira: compact table so Status remains visible */
+#page-carteira .card.gap{padding:12px}
+#page-carteira .table-wrap{max-width:100%;overflow-x:hidden}
+#tbl-carteira{width:100%;table-layout:fixed;font-size:11px}
+#tbl-carteira th,#tbl-carteira td{padding:6px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tbl-carteira th{font-size:10.5px}
+#tbl-carteira th:nth-child(1),#tbl-carteira td:nth-child(1){width:14%}
+#tbl-carteira th:nth-child(2),#tbl-carteira td:nth-child(2){width:8%}
+#tbl-carteira th:nth-child(3),#tbl-carteira td:nth-child(3){width:7%}
+#tbl-carteira th:nth-child(4),#tbl-carteira td:nth-child(4){width:4.5%}
+#tbl-carteira th:nth-child(5),#tbl-carteira td:nth-child(5){width:3%}
+#tbl-carteira th:nth-child(n+6):nth-child(-n+11),#tbl-carteira td:nth-child(n+6):nth-child(-n+11){width:6%}
+#tbl-carteira th:nth-child(12),#tbl-carteira td:nth-child(12){width:6.5%}
+#tbl-carteira th:nth-child(13),#tbl-carteira td:nth-child(13){width:6.5%}
+#tbl-carteira th:nth-child(14),#tbl-carteira td:nth-child(14){width:5%}
+#tbl-carteira th:nth-child(15),#tbl-carteira td:nth-child(15){width:9.5%;text-align:left}
+#tbl-carteira .heat-cell{display:block;padding:3px 4px;font-size:10px;overflow:hidden;text-overflow:ellipsis}
+#tbl-carteira .badge{padding:2px 5px;font-size:10px}
+.table-pager{display:flex;align-items:center;justify-content:flex-end;gap:.5rem;margin-top:.75rem;font-size:12px;color:var(--text2)}
+.table-pager .btn{padding:4px 9px;font-size:12px}
+.status-help{background:var(--info-bg);border:1px solid #bbdefb;color:var(--text);border-radius:8px;padding:9px 12px;margin:1rem 0;font-size:12px;line-height:1.45}
+.status-help b{color:var(--accent)}
+.status-help span{display:inline-block;margin-right:12px}
+
 /* BTNS */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-size:13px;font-weight:500;transition:all .15s}
 .btn-primary{background:var(--accent);color:#fff}
@@ -497,7 +521,6 @@ tbody td.mono{font-family:monospace;font-size:12px}
       <select id="fcar-status" onchange="renderCarteira()">
         <option value="">Todos</option>
         <option value="ATIVO">✅ Ativo</option>
-        <option value="CLIENTE NOVO">🆕 Novo</option>
         <option value="RISCO INATIVIDADE">⚠️ Risco</option>
         <option value="INATIVO">🔴 Inativo</option>
       </select>
@@ -522,6 +545,13 @@ tbody td.mono{font-family:monospace;font-size:12px}
     <div class="kpi-card"><div class="kpi-icon">🔴</div><div class="kpi-label">Inativos</div><div class="kpi-value" id="car-inativo">0</div></div>
   </div>
 
+  <div class="status-help no-print">
+    <b>Crit&eacute;rios de status da Carteira:</b>
+    <span><b>Ativo:</b> teve venda no &uacute;ltimo m&ecirc;s exibido.</span>
+    <span><b>Risco:</b> sem venda no &uacute;ltimo m&ecirc;s, mas com venda no m&ecirc;s anterior.</span>
+    <span><b>Inativo:</b> sem venda nos dois meses mais recentes exibidos.</span>
+  </div>
+
   <div class="card gap">
     <div class="table-wrap">
       <table id="tbl-carteira">
@@ -541,6 +571,7 @@ tbody td.mono{font-family:monospace;font-size:12px}
         <tbody id="tbody-carteira"></tbody>
       </table>
     </div>
+    <div id="carteira-pager" class="table-pager"></div>
     <div id="carteira-empty" class="empty-state" style="display:none">
       <div class="empty-state-icon">📋</div>
       <div class="empty-state-text">Importe o cadastro de clientes e o relatório de vendas</div>
@@ -585,13 +616,19 @@ tbody td.mono{font-family:monospace;font-size:12px}
     <div class="kpi-card"><div class="kpi-icon">🏙️</div><div class="kpi-label">Municípios</div><div class="kpi-value" id="ba-municipios">0</div></div>
   </div>
 
+  <div class="status-help no-print">
+    <b>Crit&eacute;rios de status:</b>
+    <span><b>Ativo:</b> cadastro n&atilde;o arquivado.</span>
+    <span><b>Inativo:</b> campo arquivado marcado como sim.</span>
+  </div>
+
   <!-- TABELA -->
   <div class="card" style="padding:12px">
     <div class="section-header" style="margin-bottom:.5rem">
       <div class="section-title">Base Ativa de Clientes</div>
       <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
         <span id="ba-count" style="font-size:12px;color:var(--text2)"></span>
-        <button class="btn btn-secondary btn-sm no-print" onclick="exportTable('tbl-baseativa','Base_Ativa')">⬇ Excel</button>
+        <button class="btn btn-secondary btn-sm no-print" onclick="exportBaseAtiva()">⬇ Excel</button>
       </div>
     </div>
 
@@ -606,6 +643,7 @@ tbody td.mono{font-family:monospace;font-size:12px}
         <tbody id="tbody-baseativa"></tbody>
       </table>
     </div>
+    <div id="baseativa-pager" class="table-pager"></div>
 
     <div id="baseativa-empty" class="empty-state" style="display:none">
       <div class="empty-state-icon">👥</div>
@@ -826,7 +864,7 @@ tbody td.mono{font-family:monospace;font-size:12px}
         <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:.5rem">📊 Vendas — reenvio manual</div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" onclick="sincronizarVendas(false)">➕ Adicionar ao Sheets</button>
-          <button class="btn btn-danger btn-sm" onclick="sincronizarVendas(true)">🗑 Apagar e Reimportar</button>
+          <button class="btn btn-secondary btn-sm" onclick="sincronizarVendas(false)">↻ Atualizar / adicionar</button>
           <button class="btn btn-secondary btn-sm" onclick="debugVendas()">🔍 Diagnóstico</button>
         </div>
         <div id="sync-vendas-status" style="font-size:12px;color:var(--text2);margin-top:.4rem"></div>
@@ -909,9 +947,11 @@ function _debounce(fn, ms) {
 }
 
 // ===================== API FETCH (Google Apps Script) =====================
-// Wrapper com timeout de 15s usando Promise.race (sem AbortSignal, evita DataCloneError).
+// Wrapper com timeout configuravel usando Promise.race (sem AbortSignal, evita DataCloneError).
 function apiFetch(url, options) {
   var opts = Object.assign({ credentials: 'omit', redirect: 'follow' }, options || {});
+  var timeoutMs = opts.timeoutMs || 15000;
+  delete opts.timeoutMs;
   var fetchPromise = fetch(url, opts).then(function(r) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
@@ -919,12 +959,32 @@ function apiFetch(url, options) {
   var timeoutPromise = new Promise(function(_, reject) {
     setTimeout(function() {
       reject(new Error('Timeout — verifique a URL do Apps Script'));
-    }, 15000);
+    }, timeoutMs);
   });
   return Promise.race([fetchPromise, timeoutPromise]);
 }
 
 // Campos necessários para vendas
+function sleep(ms) {
+  return new Promise(function(resolve){ setTimeout(resolve, ms); });
+}
+
+async function apiFetchRetry(url, options, tentativas, onRetry) {
+  let ultimoErro = null;
+  for(let tentativa = 1; tentativa <= tentativas; tentativa++) {
+    try {
+      return await apiFetch(url, options);
+    } catch(e) {
+      ultimoErro = e;
+      if(tentativa < tentativas) {
+        if(onRetry) onRetry(tentativa + 1, e);
+        await sleep(1200 * (tentativa + 1));
+      }
+    }
+  }
+  throw ultimoErro || new Error('Falha na comunicação');
+}
+
 const CAMPOS_VENDAS = [
   {id:'data',       label:'Data da Venda (emissão)',  required:true},
   {id:'nf',         label:'Nº Pedido/Venda',          required:false},
@@ -1173,11 +1233,51 @@ function _needsRender(key, extraHash) {
   return true;
 }
 
+function _formHash(ids) {
+  return ids.map(function(id){
+    var el = document.getElementById(id);
+    return el ? el.value : '';
+  }).join('|');
+}
+
+function _carteiraHash() {
+  return _formHash(['fcar-mes','fcar-ano','fcar-offset','fcar-status','fcar-vendedor','fcar-seg','fcar-uf','search-carteira']);
+}
+
+function _baseAtivaHash() {
+  return _formHash(['fba-status','fba-vendedor','fba-seg','fba-uf','fba-tipo','search-baseativa']) + '|' + baSort.key + '|' + baSort.dir;
+}
+
+function _markRendered(key, extraHash) {
+  _renderCache[key] = _dataHash() + '|' + (extraHash||'');
+}
+
 function _invalidateCache() {
   Object.keys(_renderCache).forEach(k => delete _renderCache[k]);
+  delete populateBaseAtivaFilters._lastHash;
 }
 
 var _currentPage = '';
+const TABLE_PAGE_SIZE = 500;
+let carPage = 1;
+let baPageNum = 1;
+
+function _pageSlice(rows, page) {
+  const totalPages = Math.max(1, Math.ceil(rows.length / TABLE_PAGE_SIZE));
+  const safePage = Math.min(Math.max(1, page||1), totalPages);
+  const start = (safePage - 1) * TABLE_PAGE_SIZE;
+  return { page: safePage, totalPages, rows: rows.slice(start, start + TABLE_PAGE_SIZE) };
+}
+
+function _renderPager(id, page, totalPages, totalRows, fnName) {
+  let el = document.getElementById(id);
+  if(!el) return;
+  el.innerHTML = `
+    <span>P&aacute;gina ${page} de ${totalPages} &mdash; ${totalRows} registro(s)</span>
+    <button class="btn btn-secondary" onclick="${fnName}(${page-1})" ${page<=1?'disabled':''}>Anterior</button>
+    <button class="btn btn-secondary" onclick="${fnName}(${page+1})" ${page>=totalPages?'disabled':''}>Pr&oacute;xima</button>
+  `;
+}
 
 function showPage(id) {
   // 1. Troca visual imediata — sem bloquear o browser
@@ -1186,7 +1286,6 @@ function showPage(id) {
   document.getElementById('page-'+id).classList.add('active');
   document.getElementById('tab-'+id).classList.add('active');
 
-  const sameTab = _currentPage === id;
   _currentPage = id;
 
   // Config não tem dados pesados, renderiza direto
@@ -1194,13 +1293,13 @@ function showPage(id) {
 
   // 2. Render adiado — deixa o browser pintar a aba primeiro
   requestAnimationFrame(function() {
-    if(id==='dashboard')  { if(!sameTab || _needsRender('dashboard', _filterHash())) renderDashboard(); }
-    if(id==='clientes')   { if(!sameTab || _needsRender('clientes',  _filterHash())) renderClientesTable(); }
-    if(id==='produtos')   { if(!sameTab || _needsRender('produtos',  _filterHash())) renderProdutosTable(); }
-    if(id==='vendedores') { if(!sameTab || _needsRender('vendedores',_filterHash())) { populateVendedorSelect(); renderVendedorDetail(); renderRankingVendedores(); } }
-    if(id==='bonus')      { if(!sameTab || _needsRender('bonus',     _filterHash())) renderBonus(); }
-    if(id==='carteira')   { if(!sameTab || _needsRender('carteira',  _filterHash())) renderCarteira(); }
-    if(id==='baseativa')  { if(!sameTab || _needsRender('baseativa', '')) renderBaseAtiva(); }
+    if(id==='dashboard')  { if(_needsRender('dashboard', _filterHash())) renderDashboard(); }
+    if(id==='clientes')   { if(_needsRender('clientes',  _filterHash())) renderClientesTable(); }
+    if(id==='produtos')   { if(_needsRender('produtos',  _filterHash())) renderProdutosTable(); }
+    if(id==='vendedores') { if(_needsRender('vendedores',_filterHash())) { populateVendedorSelect(); renderVendedorDetail(); renderRankingVendedores(); } }
+    if(id==='bonus')      { if(_needsRender('bonus',     _filterHash())) renderBonus(); }
+    if(id==='carteira')   { if(_needsRender('carteira',  _carteiraHash())) renderCarteira(); }
+    if(id==='baseativa')  { if(_needsRender('baseativa', _baseAtivaHash())) renderBaseAtiva(); }
   });
 }
 
@@ -1567,6 +1666,11 @@ function renderCarteira() {
   const fseg    = document.getElementById('fcar-seg')?.value||'';
   const fuf     = document.getElementById('fcar-uf')?.value||'';
   const search  = (document.getElementById('search-carteira')?.value||'').toLowerCase();
+  const carPageHash = _dataHash() + '|' + _carteiraHash();
+  if(renderCarteira._lastPageHash !== carPageHash) {
+    carPage = 1;
+    renderCarteira._lastPageHash = carPageHash;
+  }
 
   // Filtro de período da Carteira
   const fCarMes = document.getElementById('fcar-mes')?.value || '';
@@ -1623,18 +1727,27 @@ function renderCarteira() {
     if(!fatPorClienteMes[v.cliente]) fatPorClienteMes[v.cliente]={};
     fatPorClienteMes[v.cliente][key] = (fatPorClienteMes[v.cliente][key]||0)+v.valor;
   });
-
   // Montar linhas da carteira
   const clientesCad = STATE.clientes.length ? STATE.clientes : [...new Set(vendasCart.map(v=>v.cliente))].map(n=>({nome:n,vendedor:vendasCart.find(v=>v.cliente===n)?.vendedor||'',segmento:vendasCart.find(v=>v.cliente===n)?.segmento||'',uf:''}));
+  const clientesByNome = new Map(STATE.clientes.map(c => [c.nome||c.razao||'', c]));
 
-  const ANO_ATUAL = mesesDisp.length?mesesDisp[mesesDisp.length-1].split('-')[0]:'';
+  const ANO_ATUAL = fCarAno || (mesesDisp.length?mesesDisp[mesesDisp.length-1].split('-')[0]:'');
   const ANO_ANT   = ANO_ATUAL ? String(+ANO_ATUAL-1) : '';
+  const MES_LIMITE_YTD = mesesDisp.length ? parseInt(mesesDisp[mesesDisp.length-1].split('-')[1],10) : (fCarMes ? parseInt(fCarMes,10) : 12);
+  const ytdAtualPorCliente = {};
+  const ytdAntPorCliente = {};
+  STATE.vendas.forEach(v=>{
+    const mes = parseInt(v._mes,10);
+    if(mes > MES_LIMITE_YTD) return;
+    if(v._ano === ANO_ATUAL) ytdAtualPorCliente[v.cliente] = (ytdAtualPorCliente[v.cliente]||0) + v.valor;
+    else if(v._ano === ANO_ANT) ytdAntPorCliente[v.cliente] = (ytdAntPorCliente[v.cliente]||0) + v.valor;
+  });
 
   let rows = clientesCad.map(c=>{
     const nome = c.nome||c.razao||'';
     const meses = mesesDisp.map(m=>(fatPorClienteMes[nome]?.[m])||0);
-    const ytdAtual = Object.entries(fatPorClienteMes[nome]||{}).filter(([k])=>k.startsWith(ANO_ATUAL)).reduce((s,[,v])=>s+v,0);
-    const ytdAnt   = Object.entries(fatPorClienteMes[nome]||{}).filter(([k])=>k.startsWith(ANO_ANT)).reduce((s,[,v])=>s+v,0);
+    const ytdAtual = ytdAtualPorCliente[nome] || 0;
+    const ytdAnt   = ytdAntPorCliente[nome] || 0;
     const lacuna   = ytdAtual - ytdAnt;
     const crescPct = ytdAnt>0 ? lacuna/ytdAnt : null;
     const mesAtual = meses[meses.length-1]||0;
@@ -1646,7 +1759,6 @@ function renderCarteira() {
     else if(mesAnt>0) status = 'RISCO INATIVIDADE';
     else if(mesesComVenda===0 && !ytdAnt) status = 'INATIVO';
     if(c.arquivado && c.arquivado.toLowerCase().includes('desativ')) status='INATIVO';
-    if(STATE.historico.has('NOVO::'+nome)) status='CLIENTE NOVO';
 
     return {...c, nome, meses, ytdAtual, ytdAnt, lacuna, crescPct, status};
   });
@@ -1665,11 +1777,10 @@ function renderCarteira() {
     let status='INATIVO';
     if(mesAtual>0) status='ATIVO';
     else if(mesAnt>0) status='RISCO INATIVIDADE';
-    if(STATE.historico.has('NOVO::'+nome)) status='CLIENTE NOVO';
     return status;
   });
   document.getElementById('car-total').textContent  = all.length;
-  document.getElementById('car-ativo').textContent  = all.filter(s=>s==='ATIVO'||s==='CLIENTE NOVO').length;
+  document.getElementById('car-ativo').textContent  = all.filter(s=>s==='ATIVO').length;
   document.getElementById('car-risco').textContent  = all.filter(s=>s==='RISCO INATIVIDADE').length;
   document.getElementById('car-inativo').textContent= all.filter(s=>s==='INATIVO').length;
 
@@ -1677,28 +1788,32 @@ function renderCarteira() {
   const maxVal = Math.max(...rows.flatMap(r=>r.meses).filter(v=>v>0), 1);
   const statusBadge = {
     'ATIVO':'<span class="badge b-ok">✅ Ativo</span>',
-    'CLIENTE NOVO':'<span class="badge b-novo">🆕 Novo</span>',
     'RISCO INATIVIDADE':'<span class="badge b-warn">⚠️ Risco</span>',
     'INATIVO':'<span class="badge b-danger">🔴 Inativo</span>'
   };
 
   const tbody = document.getElementById('tbody-carteira');
-  tbody.innerHTML = rows.map(r=>{
+  const pag = _pageSlice(rows, carPage);
+  carPage = pag.page;
+  _renderPager('carteira-pager', pag.page, pag.totalPages, rows.length, 'setCarteiraPage');
+  document.getElementById('carteira-pager').style.display = rows.length > TABLE_PAGE_SIZE ? 'flex' : 'none';
+  tbody.innerHTML = pag.rows.map(r=>{
     const mesHTMLs = mesesDisp.map((m,i)=>{
       const v=r.meses[i]||0;
       const cls = v===0?'heat-0':v<500?'heat-1':v<2000?'heat-2':v<5000?'heat-3':'heat-4';
       return `<td class="right"><span class="heat-cell ${cls}">${v?fmtR(v):'—'}</span></td>`;
     });
     for(let i=mesesDisp.length;i<6;i++) mesHTMLs.push('<td class="right">—</td>');
-    const crescTxt = r.crescPct!==null ? `${r.crescPct>=0?'+':''}${(r.crescPct*100).toFixed(1)}%` : '—';
-    const lacunaTxt = r.ytdAnt>0 ? `${r.lacuna>=0?'+':''}${fmtR(r.lacuna)}` : '—';
-    const cliInfo = STATE.clientes.find(c=>c.nome===r.nome);
+    const temComparativo = r.ytdAtual>0 || r.ytdAnt>0;
+    const crescTxt = r.crescPct!==null ? `${r.crescPct>=0?'+':''}${(r.crescPct*100).toFixed(1)}%` : (r.ytdAtual>0 ? 'Sem base' : '—');
+    const lacunaTxt = temComparativo ? `${r.lacuna>=0?'+':''}${fmtR(r.lacuna)}` : '—';
+    const cliInfo = clientesByNome.get(r.nome);
     const endParts = cliInfo ? [cliInfo.endereco, cliInfo.numero, cliInfo.bairro, cliInfo.cidade].filter(Boolean) : [];
     const endStr   = endParts.join(', ') || '—';
     return `<tr>
-      <td><b>${r.nome}</b></td>
-      <td style="font-size:11px;color:var(--text2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${endStr}">${endStr}</td>
-      <td>${r.vendedor||''}</td><td>${r.segmento||''}</td><td>${r.uf||''}</td>
+      <td title="${r.nome}"><b>${r.nome}</b></td>
+      <td style="font-size:10px;color:var(--text2)" title="${endStr}">${endStr}</td>
+      <td title="${r.vendedor||''}">${r.vendedor||''}</td><td title="${r.segmento||''}">${r.segmento||''}</td><td>${r.uf||''}</td>
       ${mesHTMLs.join('')}
       <td class="right"><b>${fmtR(r.ytdAtual)}</b></td>
       <td class="right" style="color:${r.lacuna>=0?'#2e7d32':'#c62828'}">${lacunaTxt}</td>
@@ -1707,6 +1822,12 @@ function renderCarteira() {
     </tr>`;
   }).join('');
   document.getElementById('carteira-empty').style.display = rows.length?'none':'block';
+  _markRendered('carteira', _carteiraHash());
+}
+
+function setCarteiraPage(page) {
+  carPage = page;
+  renderCarteira();
 }
 
 // ===================== CONFIG =====================
@@ -1984,33 +2105,38 @@ async function sincronizarVendas(limparAntes) {
     entrega:    v.entrega || '',
   }));
 
-  const LOTE = 300;
+  const LOTE = 500;
   let inseridos = 0, atualizados = 0;
 
   for(let i = 0; i < dados.length; i += LOTE) {
     const lote = dados.slice(i, i + LOTE);
     const progV = Math.min(i + LOTE, dados.length);
     const pctV  = Math.round(progV / dados.length * 100);
-    st.textContent = `${progV} de ${dados.length} (${pctV}%)`;
-    setLoadingMsg('⬆️ Enviando vendas ao Sheets', pctV, `${progV} de ${dados.length} registros enviados`);
+    const faixa = `${i+1}-${progV}`;
+    st.textContent = `${progV} de ${dados.length} (${pctV}%) - lote ${faixa}`;
+    setLoadingMsg('Enviando vendas ao Sheets', pctV, `${progV} de ${dados.length} registros enviados - lote ${faixa}`);
     try {
-      const d = await apiFetch(url, {
+      const d = await apiFetchRetry(url, {
         method: 'POST',
+        timeoutMs: 120000,
         body: JSON.stringify({
           action: 'upsertVendas',
           data: { vendas: lote, limparAntes: limparAntes && i === 0 }
         })
+      }, 3, function(tentativa){
+        st.textContent = `Tentativa ${tentativa}/3 no lote ${faixa}...`;
+        setLoadingMsg('Reenviando lote de vendas', pctV, `Tentativa ${tentativa}/3 - lote ${faixa}`);
       });
       if(d.ok) {
         inseridos  += d.result.inseridos  || 0;
         atualizados += d.result.atualizados || 0;
       } else {
-        st.textContent = '❌ Erro: ' + d.error;
+        st.textContent = `Erro no lote ${faixa}: ` + d.error;
         notify('Erro na sincronização de vendas','error');
         return;
       }
     } catch(e) {
-      st.textContent = '❌ Falha: ' + e.message;
+      st.textContent = `Falha no lote ${faixa}: ` + e.message;
       notify('Erro na sincronização de vendas','error');
       return;
     }
@@ -2847,20 +2973,23 @@ function exportCarteira() {
   const MESES_NOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const fatPorClienteMes={};
   vendasExp.forEach(v=>{ const key=`${v._ano}-${v._mes}`; if(!fatPorClienteMes[v.cliente])fatPorClienteMes[v.cliente]={}; fatPorClienteMes[v.cliente][key]=(fatPorClienteMes[v.cliente][key]||0)+v.valor; });
-  const ANO_ATUAL=mesesDisp.length?mesesDisp[mesesDisp.length-1].split('-')[0]:'';
+  const fatPorClienteMesComp={};
+  STATE.vendas.forEach(v=>{ const key=`${v._ano}-${v._mes}`; if(!fatPorClienteMesComp[v.cliente])fatPorClienteMesComp[v.cliente]={}; fatPorClienteMesComp[v.cliente][key]=(fatPorClienteMesComp[v.cliente][key]||0)+v.valor; });
+  const ANO_ATUAL=fExpAno || (mesesDisp.length?mesesDisp[mesesDisp.length-1].split('-')[0]:'');
   const ANO_ANT=ANO_ATUAL?String(+ANO_ATUAL-1):'';
+  const MES_LIMITE_YTD=mesesDisp.length?parseInt(mesesDisp[mesesDisp.length-1].split('-')[1],10):(fExpMes?parseInt(fExpMes,10):12);
+  const somaYtd=(nome,ano)=>Object.entries(fatPorClienteMesComp[nome]||{}).filter(([k])=>{const[a,mes]=k.split('-');return a===ano&&parseInt(mes,10)<=MES_LIMITE_YTD;}).reduce((s,[,v])=>s+v,0);
   const clientes=STATE.clientes.length?STATE.clientes:[...new Set(STATE.vendas.map(v=>v.cliente))].map(n=>({nome:n,vendedor:STATE.vendas.find(v=>v.cliente===n)?.vendedor||'',segmento:STATE.vendas.find(v=>v.cliente===n)?.segmento||'',uf:''}));
   const headers=['Cliente','Vendedor','Segmento','UF',...mesesDisp.map(m=>{const[a,mes]=m.split('-');return`${MESES_NOME[+mes]}/${a.slice(2)}`}),'YTD Atual','YTD Ant','Lacuna','% Cresc','Status'];
   const dataRows=clientes.map(c=>{
     const nome=c.nome||'';
     const meses=mesesDisp.map(m=>(fatPorClienteMes[nome]?.[m])||0);
-    const ytdAtual=Object.entries(fatPorClienteMes[nome]||{}).filter(([k])=>k.startsWith(ANO_ATUAL)).reduce((s,[,v])=>s+v,0);
-    const ytdAnt=Object.entries(fatPorClienteMes[nome]||{}).filter(([k])=>k.startsWith(ANO_ANT)).reduce((s,[,v])=>s+v,0);
+    const ytdAtual=somaYtd(nome,ANO_ATUAL);
+    const ytdAnt=somaYtd(nome,ANO_ANT);
     const lacuna=ytdAtual-ytdAnt;
-    const crescPct=ytdAnt>0?(lacuna/ytdAnt*100).toFixed(1)+'%':'—';
+    const crescPct=ytdAnt>0?(lacuna/ytdAnt*100).toFixed(1)+'%':(ytdAtual>0?'Sem base':'—');
     const mesAtual=meses[meses.length-1]||0;const mesAnt=meses[meses.length-2]||0;
     let status='INATIVO';if(mesAtual>0)status='ATIVO';else if(mesAnt>0)status='RISCO INATIVIDADE';
-    if(STATE.historico.has('NOVO::'+nome))status='CLIENTE NOVO';
     return[nome,c.vendedor||'',c.segmento||'',c.uf||'',...meses,ytdAtual,ytdAnt,lacuna,crescPct,status];
   });
   const wb=XLSX.utils.book_new();
@@ -2933,6 +3062,7 @@ function renderBaseAtiva() {
     ['ba-total','ba-ativos','ba-inativos','ba-municipios'].forEach(id => {
       const el = document.getElementById(id); if(el) el.textContent = '0';
     });
+    _markRendered('baseativa', _baseAtivaHash());
     return;
   }
   document.getElementById('baseativa-empty').style.display = 'none';
@@ -2954,6 +3084,11 @@ function renderBaseAtiva() {
   const fuf     = document.getElementById('fba-uf')?.value || '';
   const ftipo   = document.getElementById('fba-tipo')?.value || '';
   const search  = (document.getElementById('search-baseativa')?.value || '').toLowerCase();
+  const baPageHash = _dataHash() + '|' + _baseAtivaHash();
+  if(renderBaseAtiva._lastPageHash !== baPageHash) {
+    baPageNum = 1;
+    renderBaseAtiva._lastPageHash = baPageHash;
+  }
 
   let rows = STATE.clientes.map(c => ({
     ...c,
@@ -2985,7 +3120,7 @@ function renderBaseAtiva() {
     });
   }
 
-  document.getElementById('ba-count').textContent = `${rows.length} registro(s) exibido(s)`;
+  document.getElementById('ba-count').textContent = `${rows.length} registro(s) filtrado(s)`;
 
   // Renderizar cabeçalho só se ordenação mudou
   const thead = document.getElementById('thead-ba');
@@ -3016,8 +3151,12 @@ function renderBaseAtiva() {
 
   // Renderizar linhas
   const tbody = document.getElementById('tbody-baseativa');
+  const pag = _pageSlice(rows, baPageNum);
+  baPageNum = pag.page;
+  _renderPager('baseativa-pager', pag.page, pag.totalPages, rows.length, 'setBaseAtivaPage');
+  document.getElementById('baseativa-pager').style.display = rows.length > TABLE_PAGE_SIZE ? 'flex' : 'none';
 
-  tbody.innerHTML = rows.map((c, i) => {
+  tbody.innerHTML = pag.rows.map((c, i) => {
     const statusBadge = c._status === 'Ativo'
       ? '<span class="badge b-ok">✅ Ativo</span>'
       : '<span class="badge b-danger">❌ Inativo</span>';
@@ -3025,7 +3164,7 @@ function renderBaseAtiva() {
       ? `<span class="badge b-gray" style="font-size:10px">${c.tipo.slice(0,3)}</span>`
       : '—';
     return `<tr style="border-bottom:1px solid var(--border)">
-      <td style="text-align:center;color:var(--text3);font-size:11px;padding:7px 6px">${i+1}</td>
+      <td style="text-align:center;color:var(--text3);font-size:11px;padding:7px 6px">${(pag.page-1)*TABLE_PAGE_SIZE+i+1}</td>
       <td style="padding:7px 10px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.segmento||''}">${c.segmento||'—'}</td>
       <td style="padding:7px 6px;text-align:center">${tipoBadge}</td>
       <td style="padding:7px 10px;font-family:monospace;font-size:11px">${c._doc||'—'}</td>
@@ -3040,6 +3179,58 @@ function renderBaseAtiva() {
       <td style="padding:7px 8px;text-align:center">${statusBadge}</td>
     </tr>`;
   }).join('');
+  _markRendered('baseativa', _baseAtivaHash());
+}
+
+function setBaseAtivaPage(page) {
+  baPageNum = page;
+  renderBaseAtiva();
+}
+
+function exportBaseAtiva() {
+  if(!STATE.clientes.length) { notify('Nenhum dado para exportar','warn'); return; }
+  const isArq = c => String(c.arquivado||'').toLowerCase() === 'sim';
+  const fstatus = document.getElementById('fba-status')?.value || '';
+  const fvend   = document.getElementById('fba-vendedor')?.value || '';
+  const fseg    = document.getElementById('fba-seg')?.value || '';
+  const fuf     = document.getElementById('fba-uf')?.value || '';
+  const ftipo   = document.getElementById('fba-tipo')?.value || '';
+  const search  = (document.getElementById('search-baseativa')?.value || '').toLowerCase();
+
+  let rows = STATE.clientes.map(c => ({
+    ...c,
+    _doc: c.cnpj || c.cpf || '',
+    _endereco: [c.endereco, c.numero].filter(Boolean).join(', '),
+    _status: isArq(c) ? 'Inativo' : 'Ativo',
+  }));
+  if (fstatus === 'ativo')   rows = rows.filter(c => c._status === 'Ativo');
+  if (fstatus === 'inativo') rows = rows.filter(c => c._status === 'Inativo');
+  if (fvend)  rows = rows.filter(c => c.vendedor === fvend);
+  if (fseg)   rows = rows.filter(c => c.segmento === fseg);
+  if (fuf)    rows = rows.filter(c => c.uf === fuf);
+  if (ftipo)  rows = rows.filter(c => c.tipo === ftipo);
+  if (search) rows = rows.filter(c =>
+    String(c.nome||'').toLowerCase().includes(search)     ||
+    String(c.fantasia||'').toLowerCase().includes(search) ||
+    String(c._doc||'').includes(search)                   ||
+    String(c.cidade||'').toLowerCase().includes(search)   ||
+    String(c.bairro||'').toLowerCase().includes(search)
+  );
+  if (baSort.key && baSort.key !== '_num') {
+    rows.sort((a, b) => {
+      const va = String(a[baSort.key]||'').toLowerCase();
+      const vb = String(b[baSort.key]||'').toLowerCase();
+      return va < vb ? -baSort.dir : va > vb ? baSort.dir : 0;
+    });
+  }
+
+  const headers = BA_COLS.map(c => c.label);
+  const dataRows = rows.map((r,i) => BA_COLS.map(col => col.key === '_num' ? i+1 : (r[col.key] || '')));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows]);
+  XLSX.utils.book_append_sheet(wb, ws, 'Base Ativa');
+  XLSX.writeFile(wb, `Base_Ativa_${new Date().toISOString().slice(0,10)}.xlsx`);
+  notify('Base Ativa exportada!','ok');
 }
 
 function sortBA(key) {
@@ -3058,6 +3249,9 @@ function limparFiltrosBA() {
 }
 
 function populateBaseAtivaFilters() {
+  const hash = _dataHash();
+  if (populateBaseAtivaFilters._lastHash === hash) return;
+  populateBaseAtivaFilters._lastHash = hash;
   function fill(id, values) {
     const el = document.getElementById(id);
     if (!el) return;
