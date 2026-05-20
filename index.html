@@ -914,27 +914,41 @@ var _CACHE_KEY_C = 'ea_cache_clientes_v2';
 var _CACHE_TS    = 'ea_cache_ts';
 var _CACHE_MAX_MS = 60 * 60 * 1000; // 1 hora
 
+function _clearDataCache() {
+  try {
+    localStorage.removeItem(_CACHE_KEY_V);
+    localStorage.removeItem(_CACHE_KEY_C);
+    localStorage.removeItem(_CACHE_TS);
+  } catch(e) {}
+}
+
 function _cacheDataToStorage() {
   try {
     var ts = Date.now();
-    localStorage.setItem(_CACHE_TS,    String(ts));
-    localStorage.setItem(_CACHE_KEY_V, JSON.stringify(STATE.vendas));
-    localStorage.setItem(_CACHE_KEY_C, JSON.stringify(STATE.clientes));
-  } catch(e) { console.warn('Cache write error', e); }
+    var vendasJson = JSON.stringify(STATE.vendas);
+    var clientesJson = JSON.stringify(STATE.clientes);
+    _clearDataCache();
+    localStorage.setItem(_CACHE_KEY_C, clientesJson);
+    localStorage.setItem(_CACHE_KEY_V, vendasJson);
+    localStorage.setItem(_CACHE_TS, String(ts));
+  } catch(e) {
+    _clearDataCache();
+    console.warn('Cache local desativado: volume de dados excedeu o limite do navegador.', e);
+  }
 }
 
 function _loadCacheFromStorage() {
   try {
     var ts  = parseInt(localStorage.getItem(_CACHE_TS) || '0');
     var age = Date.now() - ts;
-    if (age > _CACHE_MAX_MS) return false; // cache expirado
+    if (age > _CACHE_MAX_MS) { _clearDataCache(); return false; } // cache expirado
     var cv = localStorage.getItem(_CACHE_KEY_V);
     var cc = localStorage.getItem(_CACHE_KEY_C);
     if (!cv || !cc) return false;
     STATE.vendas    = JSON.parse(cv);
     STATE.clientes  = JSON.parse(cc);
     return true;
-  } catch(e) { return false; }
+  } catch(e) { _clearDataCache(); return false; }
 }
 
 // ===================== DEBOUNCE =====================
@@ -2332,8 +2346,8 @@ async function carregarTudoDoSheets() {
     // ── Busca clientes e vendas em paralelo ──────────────────────────────────
     setLoadingMsg('Carregando dados do Sheets...', 15);
     const [dc, dv] = await Promise.all([
-      apiFetch(url + '?action=getClientes'),
-      apiFetch(url + '?action=getVendas')
+      apiFetch(url + '?action=getClientes', { timeoutMs: 60000 }),
+      apiFetch(url + '?action=getVendas', { timeoutMs: 120000 })
     ]);
     setLoadingMsg('Processando dados...', 60);
 
